@@ -212,11 +212,17 @@ public final class PlayerCommandService {
         authService.sendMessageWhenComplete(sender, result);
     }
 
+    public void sendRootUsage(CommandSender sender, String label) {
+        sender.sendMessage("§c用法: /" + label + " <子命令>");
+        sender.sendMessage("§c使用 /" + label + " help 查看所有命令。");
+    }
+
     public void sendHelp(CommandSender sender) {
         CommandHelpTheme.sendUsage(sender, "/login <密码>");
         CommandHelpTheme.sendUsage(sender, "/register <密码> <密码>");
         CommandHelpTheme.sendUsage(sender, "/logout");
         CommandHelpTheme.sendUsage(sender, "/cp <新密码> <重复新密码>");
+        CommandHelpTheme.sendUsage(sender, "/mlg help");
         CommandHelpTheme.sendUsage(sender, "/mlg reload");
         CommandHelpTheme.sendUsage(sender, "/mlg password <玩家名> <新密码>");
         CommandHelpTheme.sendUsage(sender, "/mlg unregister <玩家名>");

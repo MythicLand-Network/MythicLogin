@@ -19,6 +19,11 @@ public final class AdminCommands extends AbstractCommand {
     }
 
     @CommandRoute(path = {"mythiclogin"}, usages = "/mythiclogin", maxArguments = 0)
+    private void root(CommandContext context) {
+        this.commandService.sendRootUsage(context.sender(), context.label());
+    }
+
+    @CommandRoute(path = {"mythiclogin", "help"}, usages = "/mythiclogin help")
     private void help(CommandContext context) {
         this.commandService.sendHelp(context.sender());
     }
