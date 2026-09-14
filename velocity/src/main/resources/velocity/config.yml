@@ -1,0 +1,36 @@
+database:
+  mode: postgresql
+  host: 127.0.0.1
+  port: 5432
+  name: mythiclogin
+  username: postgres
+  password: change-me
+  table: mythiclogin
+security:
+  session-enabled: true
+  session-timeout-minutes: 5
+restrictions:
+  # 是否把所有后端服都视为登录服
+  # 开启后, 代理命令限制会在所有服务器生效
+  login-servers:
+    all-servers-login: false
+    # 当all-servers-login为false时, 只有下面这些服务器名会被视为登录服
+    # 这里填写的是Velocity中的server name, 不是MOTD或显示名
+    names:
+      - Login
+  proxy-commands:
+    enabled: true
+    mode: WHITELIST
+    whitelist:
+      - /login
+      - /l
+      - /register
+      - /reg
+    blacklist:
+      - /server
+      - /send
+      - /find
+      - /glist
+      - /velocity
+      - /shutdown
+      - /reload

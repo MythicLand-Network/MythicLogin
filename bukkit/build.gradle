@@ -1,0 +1,51 @@
+plugins {
+    id 'com.gradleup.shadow'
+}
+
+configurations {
+    firstPartyEmbedded {
+        transitive = false
+    }
+}
+
+dependencies {
+    implementation project(':common')
+    compileOnly 'cn.mythicland:mythic-framework-core:1.0.0'
+    compileOnly 'cn.mythicland:mythic-framework-bukkit:1.0.0'
+    compileOnly 'com.zaxxer:HikariCP:4.0.3'
+    compileOnly 'org.flywaydb:flyway-core:13.4.0'
+
+    firstPartyEmbedded project(':common')
+    firstPartyEmbedded 'cn.mythicland:mythic-framework-core:1.0.0'
+    firstPartyEmbedded 'cn.mythicland:mythic-framework-bukkit:1.0.0'
+
+    compileOnly 'org.spigotmc:spigot-api:1.8.8-R0.1-SNAPSHOT'
+    compileOnly 'net.dmulloy2:ProtocolLib:5.4.0'
+    testImplementation 'org.spigotmc:spigot-api:1.8.8-R0.1-SNAPSHOT'
+}
+
+tasks.named('shadowJar') {
+    archiveFileName = 'MythicLogin-Bukkit.jar'
+    configurations = [project.configurations.firstPartyEmbedded]
+}
+
+tasks.named('jar') {
+    archiveFileName = 'MythicLogin-Bukkit-plain.jar'
+}
+
+tasks.named('sourcesJar') {
+    archiveFileName = 'MythicLogin-Bukkit-sources.jar'
+}
+
+tasks.named('assemble') {
+    dependsOn tasks.named('shadowJar')
+}
+
+processResources {
+    def props = [version: version]
+    inputs.properties props
+    filteringCharset = 'UTF-8'
+    filesMatching('plugin.yml') {
+        expand props
+    }
+}

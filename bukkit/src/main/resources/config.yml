@@ -1,0 +1,54 @@
+database:
+  mode: sqlite
+  sqlite-file: plugins/MythicLogin/mythiclogin.db
+  host: 127.0.0.1
+  port: 5432
+  name: mythiclogin
+  username: postgres
+  password: change-me
+  table: mythiclogin
+security:
+  session-enabled: true
+  session-timeout-minutes: 5
+  min-password-length: 4
+  max-password-length: 26
+  auth-timeout-seconds: 60
+restrictions:
+  block-non-whitelist-tab-complete: true
+  command-prefix-whitelist:
+    - /l
+    - /login
+    - /reg
+    - /register
+display:
+  action-bar:
+    login-text: '&7剩余时间: &f{0} &7秒'
+    register-text: '&7剩余时间: &f{0} &7秒'
+  text:
+    title:
+      login-title: '&c请登录!'
+      register-title: '&c请注册!'
+    subtitle:
+      subtitle-interval-ticks: 20
+      subtitle-fade-in: 0
+      subtitle-stay: 20
+      subtitle-fade-out: 0
+      login-subtitle: '&7使用 &f/login &f<密码> &7完成登录'
+      register-subtitle: '&7使用 &f/register &f<密码> <重复密码> &7完成注册'
+    failure-title:
+      restore-delay-ticks: 20
+      fade-in: 0
+      stay: 20
+      fade-out: 0
+      login-title: '&c密码错误!'
+      login-subtitle: '&7请重新输入正确密码'
+    success-title:
+      fade-in: 10
+      stay: 20
+      fade-out: 10
+      login-title: '&a登录成功'
+      login-subtitle: '&7欢迎回来, &f{0}'
+      register-title: '&a注册成功'
+      register-subtitle: '&7欢迎加入, &f{0}'
+      auto-login-title: '&a欢迎回来'
+      auto-login-subtitle: '&7已为您自动登录。'

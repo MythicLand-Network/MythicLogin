@@ -1,0 +1,39 @@
+plugins {
+    id 'com.gradleup.shadow'
+}
+
+configurations {
+    firstPartyEmbedded {
+        transitive = false
+    }
+}
+
+dependencies {
+    firstPartyEmbedded project(':common')
+    firstPartyEmbedded project(':bukkit')
+    firstPartyEmbedded project(':velocity')
+    firstPartyEmbedded 'cn.mythicland:mythic-framework-core:1.0.0'
+    firstPartyEmbedded 'cn.mythicland:mythic-framework-bukkit:1.0.0'
+}
+
+tasks.named('shadowJar') {
+    archiveFileName = 'MythicLogin.jar'
+    configurations = [project.configurations.firstPartyEmbedded]
+    exclude 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA'
+}
+
+tasks.named('jar') {
+    archiveFileName = 'MythicLogin-plain.jar'
+}
+
+tasks.named('sourcesJar') {
+    archiveFileName = 'MythicLogin-sources.jar'
+    dependsOn project(':common').tasks.named('generateRuntimeDependencyManifest')
+    from project(':common').sourceSets.main.allSource
+    from project(':bukkit').sourceSets.main.allSource
+    from project(':velocity').sourceSets.main.allSource
+}
+
+tasks.named('assemble') {
+    dependsOn tasks.named('shadowJar')
+}

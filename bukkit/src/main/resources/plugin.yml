@@ -1,0 +1,27 @@
+name: MythicLogin
+version: '${version}'
+main: cn.mythicland.mythiclogin.MythicLogin
+load: STARTUP
+author: ShanguanLinG
+depend: [ProtocolLib]
+commands:
+  mythiclogin:
+    aliases: [mlg]
+    description: MythicLogin main command
+  register:
+    aliases: [reg]
+  login:
+    aliases: [l]
+  logout:
+  changepassword:
+    aliases: [changepass, cp]
+permissions:
+  mythiclogin.reload:
+    description: Reload MythicLogin configs
+    default: op
+  mythiclogin.password:
+    description: Change another player's password
+    default: op
+  mythiclogin.unregister:
+    description: Unregister another player's account
+    default: op
