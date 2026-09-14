@@ -213,15 +213,13 @@ public final class PlayerCommandService {
     }
 
     public void sendHelp(CommandSender sender) {
-        CommandHelpTheme.sendDivider(sender);
-        CommandHelpTheme.sendCommand(sender, "/login", "<密码>", "登录你的账号");
-        CommandHelpTheme.sendCommand(sender, "/register", "<密码> <密码>", "注册并登录你的账号");
-        CommandHelpTheme.sendCommand(sender, "/logout", "", "登出当前账号并重新登录");
-        CommandHelpTheme.sendCommand(sender, "/cp", "<新密码> <重复新密码>", "在登录后修改你自己的密码");
-        CommandHelpTheme.sendCommand(sender, "/mlg reload", "", "重载插件配置与消息");
-        CommandHelpTheme.sendCommand(sender, "/mlg password", "<玩家名> <新密码>", "直接修改指定玩家的密码");
-        CommandHelpTheme.sendCommand(sender, "/mlg unregister", "<玩家名>", "注销指定玩家的账号");
-        CommandHelpTheme.sendDivider(sender);
+        CommandHelpTheme.sendUsage(sender, "/login <密码>");
+        CommandHelpTheme.sendUsage(sender, "/register <密码> <密码>");
+        CommandHelpTheme.sendUsage(sender, "/logout");
+        CommandHelpTheme.sendUsage(sender, "/cp <新密码> <重复新密码>");
+        CommandHelpTheme.sendUsage(sender, "/mlg reload");
+        CommandHelpTheme.sendUsage(sender, "/mlg password <玩家名> <新密码>");
+        CommandHelpTheme.sendUsage(sender, "/mlg unregister <玩家名>");
     }
 
     private ParsedCommand parse(String message) {
