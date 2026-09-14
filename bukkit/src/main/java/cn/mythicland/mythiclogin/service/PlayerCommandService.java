@@ -109,7 +109,7 @@ public final class PlayerCommandService {
 
     private void handleAdminCommand(Player player, String[] parts) {
         if (parts.length <= 1) {
-            sendHelp(player);
+            sendRootUsage(player, parts[0]);
             return;
         }
 

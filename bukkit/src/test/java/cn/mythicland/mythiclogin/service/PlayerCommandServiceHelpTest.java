@@ -1,6 +1,7 @@
 package cn.mythicland.mythiclogin.service;
 
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
@@ -12,6 +13,24 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 final class PlayerCommandServiceHelpTest {
+    @Test
+    void sendsUsageHintThroughTheInGameCommandPath() {
+        Player player = mock(Player.class);
+        PlayerCommandService service = service();
+
+        service.handle(player, "/mlg");
+
+        ArgumentCaptor<String> messages = ArgumentCaptor.forClass(String.class);
+        verify(player, times(2)).sendMessage(messages.capture());
+        assertEquals(
+                List.of(
+                        "§c用法: /mlg <子命令>",
+                        "§c使用 /mlg help 查看所有命令。"
+                ),
+                messages.getAllValues()
+        );
+    }
+
     @Test
     void sendsUsageHintForRootCommandWithoutArguments() {
         CommandSender sender = mock(CommandSender.class);
