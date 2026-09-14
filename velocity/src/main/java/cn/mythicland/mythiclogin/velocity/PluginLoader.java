@@ -1,6 +1,5 @@
 package cn.mythicland.mythiclogin.velocity;
 
-import cn.mythicland.mythiclogin.velocity.config.MessageConfig;
 import cn.mythicland.mythiclogin.velocity.config.ProxyConfig;
 import cn.mythicland.mythiclogin.velocity.manager.IProxyRestrictionManager;
 import cn.mythicland.mythiclogin.velocity.manager.ProxyDataManager;
@@ -12,7 +11,6 @@ public final class PluginLoader {
     private static MythicLoginVelocity instance;
     private static PluginLogger pluginLogger;
     private static ProxyConfig proxyConfig;
-    private static MessageConfig messageConfig;
     private static ProxyDataManager dataManager;
     private static MessageService messageService;
     private static IProxyRestrictionManager proxyRestrictionManager;
@@ -37,7 +35,6 @@ public final class PluginLoader {
         proxyRestrictionManager = null;
         messageService = null;
         dataManager = null;
-        messageConfig = null;
         proxyConfig = null;
         pluginLogger = null;
         instance = null;
@@ -55,10 +52,6 @@ public final class PluginLoader {
         return proxyConfig;
     }
 
-    public static MessageConfig getMessageConfig() {
-        return messageConfig;
-    }
-
     public static ProxyDataManager getDataManager() {
         return dataManager;
     }
@@ -74,7 +67,6 @@ public final class PluginLoader {
     private static void applyBootstrap(LoaderBootstrap loaderBootstrap) {
         pluginLogger = loaderBootstrap.getPluginLogger();
         proxyConfig = loaderBootstrap.getProxyConfig();
-        messageConfig = loaderBootstrap.getMessageConfig();
         dataManager = loaderBootstrap.getDataManager();
         messageService = loaderBootstrap.getMessageService();
         proxyRestrictionManager = loaderBootstrap.getProxyRestrictionManager();

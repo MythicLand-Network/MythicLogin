@@ -1,6 +1,5 @@
 package cn.mythicland.mythiclogin.velocity;
 
-import cn.mythicland.mythiclogin.velocity.config.MessageConfig;
 import cn.mythicland.mythiclogin.velocity.config.ProxyConfig;
 import cn.mythicland.mythiclogin.velocity.listener.ProxyCommandListener;
 import cn.mythicland.mythiclogin.velocity.listener.ProxyPreLoginListener;
@@ -15,7 +14,6 @@ final class LoaderBootstrap {
 
     private final PluginLogger pluginLogger;
     private final ProxyConfig proxyConfig;
-    private final MessageConfig messageConfig;
     private final ProxyDataManager dataManager;
     private final MessageService messageService;
     private final IProxyRestrictionManager proxyRestrictionManager;
@@ -23,14 +21,12 @@ final class LoaderBootstrap {
     private LoaderBootstrap(
         PluginLogger pluginLogger,
         ProxyConfig proxyConfig,
-        MessageConfig messageConfig,
         ProxyDataManager dataManager,
         MessageService messageService,
         IProxyRestrictionManager proxyRestrictionManager
     ) {
         this.pluginLogger = pluginLogger;
         this.proxyConfig = proxyConfig;
-        this.messageConfig = messageConfig;
         this.dataManager = dataManager;
         this.messageService = messageService;
         this.proxyRestrictionManager = proxyRestrictionManager;
@@ -38,7 +34,6 @@ final class LoaderBootstrap {
 
     static LoaderBootstrap create(MythicLoginVelocity plugin) {
         ProxyConfig proxyConfig = new ProxyConfig(plugin.getDataDirectory(), plugin.getClass().getClassLoader());
-        MessageConfig messageConfig = new MessageConfig(plugin.getDataDirectory(), plugin.getClass().getClassLoader());
         PluginLogger logger = new PluginLogger(plugin.getLogger(), "MythicLoginVelocity");
 
         ProxyDataManager dataManager;
@@ -49,14 +44,14 @@ final class LoaderBootstrap {
             throw exception;
         }
 
-        MessageService messageService = new MessageService(messageConfig);
+        MessageService messageService = new MessageService();
         IProxyRestrictionManager proxyRestrictionManager = new ProxyRestrictionManagerImpl(
             proxyConfig.getSettings(),
             messageService,
             dataManager.getAccountRepository(),
             logger
         );
-        return new LoaderBootstrap(logger, proxyConfig, messageConfig, dataManager, messageService, proxyRestrictionManager);
+        return new LoaderBootstrap(logger, proxyConfig, dataManager, messageService, proxyRestrictionManager);
     }
 
     void registerListeners(MythicLoginVelocity plugin) {
@@ -75,10 +70,6 @@ final class LoaderBootstrap {
 
     ProxyConfig getProxyConfig() {
         return proxyConfig;
-    }
-
-    MessageConfig getMessageConfig() {
-        return messageConfig;
     }
 
     ProxyDataManager getDataManager() {

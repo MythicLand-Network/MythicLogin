@@ -1,11 +1,12 @@
 database:
   mode: postgresql
-  host: 127.0.0.1
-  port: 5432
-  name: mythiclogin
-  username: postgres
-  password: change-me
   table: mythiclogin
+  postgresql:
+    host: 127.0.0.1
+    port: 5432
+    name: mythiclogin
+    username: postgres
+    password: change-me
 security:
   session-enabled: true
   session-timeout-minutes: 5

@@ -139,7 +139,7 @@ public final class PlayerCommandService {
 
     public void reload(CommandSender sender) {
         if (!sender.hasPermission("mythiclogin.reload")) {
-            sender.sendMessage(messageService.get("system.no-permission"));
+            sender.sendMessage(messageService.get(MessageKey.SYSTEM_NO_PERMISSION));
             return;
         }
         reloadAction.run();
@@ -156,7 +156,7 @@ public final class PlayerCommandService {
 
     public void updatePassword(CommandSender sender, String playerName, String newPassword) {
         if (!sender.hasPermission("mythiclogin.password")) {
-            sender.sendMessage(messageService.get("system.no-permission"));
+            sender.sendMessage(messageService.get(MessageKey.SYSTEM_NO_PERMISSION));
             return;
         }
         if (!authService.isPasswordLengthValid(newPassword)) {
@@ -193,7 +193,7 @@ public final class PlayerCommandService {
 
     public void unregister(CommandSender sender, String playerName) {
         if (!sender.hasPermission("mythiclogin.unregister")) {
-            sender.sendMessage(messageService.get("system.no-permission"));
+            sender.sendMessage(messageService.get(MessageKey.SYSTEM_NO_PERMISSION));
             return;
         }
         CompletableFuture<String> result = authService.accountExists(playerName)

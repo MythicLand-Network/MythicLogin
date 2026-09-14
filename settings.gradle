@@ -12,6 +12,4 @@ include 'bukkit'
 include 'velocity'
 include 'universal'
 
-if (file('dependencies/MythicFramework').isDirectory()) {
-    includeBuild('dependencies/MythicFramework')
-}
+includeBuild('../MythicFramework')

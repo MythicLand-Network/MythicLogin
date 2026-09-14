@@ -1,41 +1,20 @@
 package cn.mythicland.mythiclogin.service;
 
-import cn.mythicland.mythiclogin.manager.ConfigManager;
-import org.bukkit.plugin.Plugin;
+import cn.mythicland.mythiclogin.config.key.MessageKey;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
-
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.logging.Logger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 class MessageServiceTest {
 
     @Test
-    void shouldOnlyRenderPrefixWhenPlaceholderExists(@TempDir Path tempDir) throws IOException {
-        Files.writeString(tempDir.resolve("config.yml"), "", StandardCharsets.UTF_8);
-        Files.writeString(
-            tempDir.resolve("messages.yml"),
-            "prefix: '&7[&dTest&7]&r'\nplain: '&ahello'\nwith-prefix: '{prefix} &ahello'\n",
-            StandardCharsets.UTF_8
+    void shouldRenderHardcodedMessageAndPlaceholders() {
+        MessageService messageService = new MessageService();
+
+        assertEquals("\u00A7a登录成功, 欢迎回来。", messageService.get(MessageKey.AUTH_LOGIN_SUCCESS));
+        assertEquals(
+                "\u00A7c检测到已有账号, 请使用正确的游戏账户 \u00A7fTester \u00A7c登录。",
+                messageService.get(MessageKey.AUTH_CASE_MISMATCH, "Tester")
         );
-
-        MessageService messageService = new MessageService(createConfigManager(tempDir));
-
-        assertEquals("\u00A7ahello", messageService.get("plain"));
-        assertEquals("\u00A77[\u00A7dTest\u00A77]\u00A7r \u00A7ahello", messageService.get("with-prefix"));
-    }
-
-    private ConfigManager createConfigManager(Path tempDir) {
-        Plugin plugin = mock(Plugin.class);
-        when(plugin.getDataFolder()).thenReturn(tempDir.toFile());
-        when(plugin.getLogger()).thenReturn(Logger.getLogger("MessageServiceTest"));
-        return new ConfigManager(plugin);
     }
 }

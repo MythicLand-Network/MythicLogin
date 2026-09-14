@@ -22,7 +22,8 @@ public final class MythicLogin extends JavaPlugin {
                 MythicLogin.class,
                 getDataFolder().toPath(),
                 Set.of("common", "bukkit", "bukkit-" + databaseMode),
-                getLogger()::info
+                getLogger()::info,
+                getLogger()::warning
         );
         this.runtimeBootstrap.load();
     }

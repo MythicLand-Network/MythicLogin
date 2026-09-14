@@ -1,8 +1,8 @@
-import java.security.MessageDigest
-
 plugins {
     id 'java-library'
 }
+
+apply from: rootProject.file('../MythicFramework/gradle/runtime-library-manifest.gradle')
 
 configurations {
     commonRuntimeLibraries
@@ -35,54 +35,21 @@ dependencies {
 }
 
 def generatedResources = layout.buildDirectory.dir('generated/runtime-resources')
-
-sourceSets.main.resources.srcDir(generatedResources)
-
-tasks.register('generateRuntimeDependencyManifest') {
-    outputs.file(generatedResources.map { it.file('META-INF/mythiclogin-libraries.properties') })
-    doLast {
-        def platformConfigurations = [
+def runtimeDependencyManifest = registerRuntimeLibraryManifest(
+        'generateRuntimeDependencyManifest',
+        generatedResources,
+        'META-INF/mythiclogin-libraries.properties',
+        [
                 common: configurations.commonRuntimeLibraries,
                 'bukkit-sqlite': configurations.bukkitSqliteRuntimeLibraries,
                 'bukkit-postgresql': configurations.bukkitPostgresqlRuntimeLibraries,
                 velocity: configurations.velocityRuntimeLibraries,
                 'velocity-postgresql': configurations.velocityPostgresqlRuntimeLibraries
         ]
-        def libraries = [:]
-        platformConfigurations.each { platform, configuration ->
-            configuration.resolvedConfiguration.resolvedArtifacts.each { artifact ->
-                def id = artifact.moduleVersion.id
-                def coordinate = "${id.group}:${artifact.name}:${id.version}"
-                def entry = libraries.computeIfAbsent(coordinate) {
-                    [artifact: artifact, platforms: new LinkedHashSet<String>()]
-                }
-                entry.platforms.add(platform)
-            }
-        }
-
-        def output = generatedResources.get().file('META-INF/mythiclogin-libraries.properties').asFile
-        output.parentFile.mkdirs()
-        output.withWriter('UTF-8') { writer ->
-            def ordered = libraries.entrySet().sort { left, right -> left.key <=> right.key }
-            writer.println("library.count=${ordered.size()}")
-            ordered.eachWithIndex { item, index ->
-                def artifact = item.value.artifact
-                def file = artifact.file
-                def digest = MessageDigest.getInstance('SHA-256').digest(file.bytes).encodeHex().toString()
-                def id = artifact.moduleVersion.id
-                def path = "${id.group.replace('.', '/')}/${artifact.name}/${id.version}/${file.name}"
-                writer.println("library.${index}.coordinate=${item.key}")
-                writer.println("library.${index}.fileName=${file.name}")
-                writer.println("library.${index}.downloadUrls=https://repo.maven.apache.org/maven2/${path},https://repo1.maven.org/maven2/${path}")
-                writer.println("library.${index}.sha256=${digest}")
-                writer.println("library.${index}.platform=${item.value.platforms.join(',')}")
-            }
-        }
-    }
-}
+)
 
 tasks.named('processResources') {
-    dependsOn tasks.named('generateRuntimeDependencyManifest')
+    dependsOn runtimeDependencyManifest
 }
 
 tasks.named('jar') {
@@ -91,5 +58,5 @@ tasks.named('jar') {
 
 tasks.named('sourcesJar') {
     archiveFileName = 'MythicLogin-Common-sources.jar'
-    dependsOn tasks.named('generateRuntimeDependencyManifest')
+    dependsOn runtimeDependencyManifest
 }

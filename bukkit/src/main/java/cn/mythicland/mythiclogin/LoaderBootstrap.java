@@ -71,7 +71,7 @@ final class LoaderBootstrap {
             throw exception;
         }
 
-        MessageService messageService = new MessageService(configManager);
+        MessageService messageService = new MessageService();
         StartupGateService startupGateService = new StartupGateService(messageService);
         AuthSessionManager authSessionManager = new AuthSessionManager();
         DisplayService displayService = new DisplayService(plugin, configManager, messageService, logger);
@@ -132,7 +132,6 @@ final class LoaderBootstrap {
 
     void reload() {
         configManager.reload();
-        messageService.reload();
         startupGateService.reload();
         dataManager.reload(configManager.getSettings().getDatabase());
         authService.reload();

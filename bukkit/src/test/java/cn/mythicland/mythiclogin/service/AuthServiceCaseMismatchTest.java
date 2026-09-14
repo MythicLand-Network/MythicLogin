@@ -82,7 +82,7 @@ class AuthServiceCaseMismatchTest {
             DatabaseSettings.postgresql("127.0.0.1", 5432, "mythiclogin", "postgres", "change-me", "accounts"),
             new SessionSettings(true, 30),
             new RestrictionSettings(Collections.singletonList("/login"), false, false, true, 60, 6, 32, true),
-            new DisplaySettings(20, "", "", 20, 0, 20, 0, "", "", "", "", 20, 0, 20, 0, "", "", 10, 20, 10, "", "", "", "", "", "")
+            DisplaySettings.defaults()
         );
     }
 }

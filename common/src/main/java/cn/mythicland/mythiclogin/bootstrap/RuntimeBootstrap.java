@@ -1,5 +1,8 @@
 package cn.mythicland.mythiclogin.bootstrap;
 
+import cn.mythicland.framework.runtime.RuntimeLibraryLoader;
+import cn.mythicland.framework.runtime.SelectiveChildFirstClassLoader;
+
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -15,7 +18,7 @@ public final class RuntimeBootstrap {
     private final String mainLoaderName;
     private final Class<?> pluginType;
     private final PathConfiguration pathConfiguration;
-    private RuntimeClassLoader classLoader;
+    private SelectiveChildFirstClassLoader classLoader;
     private Object mainLoader;
     private Method loadMethod;
     private Method enableMethod;
@@ -28,12 +31,18 @@ public final class RuntimeBootstrap {
             Class<?> pluginType,
             java.nio.file.Path dataDirectory,
             Set<String> activePlatforms,
-            Consumer<String> logger
+            Consumer<String> infoLogger,
+            Consumer<String> warningLogger
     ) {
         this.plugin = plugin;
         this.mainLoaderName = mainLoaderName;
         this.pluginType = pluginType;
-        this.pathConfiguration = new PathConfiguration(dataDirectory, activePlatforms, logger);
+        this.pathConfiguration = new PathConfiguration(
+                dataDirectory,
+                activePlatforms,
+                infoLogger,
+                warningLogger
+        );
     }
 
     public void load() {
@@ -43,9 +52,32 @@ public final class RuntimeBootstrap {
             urls.addAll(new RuntimeLibraryLoader(
                     this.pathConfiguration.dataDirectory(),
                     this.pluginType.getClassLoader(),
-                    this.pathConfiguration.logger()
+                    "META-INF/mythiclogin-libraries.properties",
+                    this.pathConfiguration.infoLogger(),
+                    this.pathConfiguration.warningLogger()
             ).resolveLibraries(this.pathConfiguration.activePlatforms()));
-            this.classLoader = new RuntimeClassLoader(urls.toArray(URL[]::new), this.pluginType.getClassLoader());
+            this.classLoader = new SelectiveChildFirstClassLoader(
+                    urls.toArray(URL[]::new),
+                    this.pluginType.getClassLoader(),
+                    List.of(
+                            "cn.mythicland.mythiclogin.",
+                            "cn.mythicland.framework.",
+                            "org.reflections.",
+                            "javassist.",
+                            "com.zaxxer.hikari.",
+                            "org.flywaydb.",
+                            "org.postgresql.",
+                            "org.sqlite.",
+                            "org.yaml.snakeyaml.",
+                            "com.fasterxml.jackson.",
+                            "tools.jackson."
+                    ),
+                    List.of(
+                            "cn.mythicland.mythiclogin.MythicLogin",
+                            "cn.mythicland.mythiclogin.velocity.MythicLoginVelocity"
+                    ),
+                    List.of("cn.mythicland.mythiclogin.bootstrap.")
+            );
             Class<?> type = Class.forName(this.mainLoaderName, true, this.classLoader);
             this.mainLoader = type.getConstructor(this.pluginType).newInstance(this.plugin);
             this.loadMethod = type.getMethod("load");
@@ -96,7 +128,9 @@ public final class RuntimeBootstrap {
     }
 
     private void invoke(Method method) {
-        if (this.mainLoader == null || method == null) throw new IllegalStateException("MythicLogin runtime is not loaded");
+        if (this.mainLoader == null || method == null) {
+            throw new IllegalStateException("MythicLogin runtime is not loaded");
+        }
         ClassLoader previous = Thread.currentThread().getContextClassLoader();
         try {
             Thread.currentThread().setContextClassLoader(this.classLoader);
@@ -125,7 +159,8 @@ public final class RuntimeBootstrap {
     private record PathConfiguration(
             java.nio.file.Path dataDirectory,
             Set<String> activePlatforms,
-            Consumer<String> logger
+            Consumer<String> infoLogger,
+            Consumer<String> warningLogger
     ) {
         private PathConfiguration {
             activePlatforms = Set.copyOf(activePlatforms);

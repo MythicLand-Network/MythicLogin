@@ -14,7 +14,7 @@ import java.nio.file.Path;
 import java.util.Set;
 
 @Plugin(
-    id = "mythicloginvelocity",
+    id = "mythiclogin",
     name = "MythicLoginVelocity",
     version = "1.0.0",
     authors = {"bilib"}
@@ -45,7 +45,8 @@ public final class MythicLoginVelocity {
                 MythicLoginVelocity.class,
                 this.dataDirectory,
                 Set.of("common", "velocity", "velocity-postgresql"),
-                this.logger::info
+                this.logger::info,
+                this.logger::warn
         );
         this.runtimeBootstrap.load();
         this.runtimeBootstrap.enable();
