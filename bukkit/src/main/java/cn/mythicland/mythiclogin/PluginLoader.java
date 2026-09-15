@@ -39,7 +39,6 @@ public final class PluginLoader {
         }
         try {
             bootstrap.registerStartupGate();
-            bootstrap.registerCommands();
             bootstrap.registerListeners();
             bootstrap.finishStartup();
         } catch (IllegalStateException exception) {

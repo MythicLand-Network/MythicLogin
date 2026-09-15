@@ -2,7 +2,7 @@ plugins {
     id 'java-library'
 }
 
-apply from: rootProject.file('../MythicFramework/gradle/runtime-library-manifest.gradle')
+apply from: rootProject.file('dependencies/MythicFramework/gradle/runtime-library-manifest.gradle')
 
 configurations {
     commonRuntimeLibraries

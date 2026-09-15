@@ -2,18 +2,14 @@ plugins {
     id 'com.gradleup.shadow'
 }
 
-configurations {
-    firstPartyEmbedded {
-        transitive = false
-    }
-}
+apply from: rootProject.file('dependencies/MythicFramework/gradle/runtime-library-manifest.gradle')
 
 dependencies {
-    firstPartyEmbedded project(':common')
-    firstPartyEmbedded project(':bukkit')
-    firstPartyEmbedded project(':velocity')
-    firstPartyEmbedded 'cn.mythicland:mythic-framework-core:1.0.0'
-    firstPartyEmbedded 'cn.mythicland:mythic-framework-bukkit:1.0.0'
+    firstParty project(':common')
+    firstParty project(':bukkit')
+    firstParty project(':velocity')
+    firstParty 'cn.mythicland:mythic-framework-core:1.0.0'
+    firstParty 'cn.mythicland:mythic-framework-bukkit:1.0.0'
 }
 
 tasks.named('shadowJar') {

@@ -1,5 +1,6 @@
 package cn.mythicland.mythiclogin.velocity;
 
+import cn.mythicland.framework.runtime.FrameworkRuntimeClassLoading;
 import cn.mythicland.framework.runtime.RuntimeBootstrap;
 import cn.mythicland.mythiclogin.bootstrap.RuntimeBootstrapFactory;
 import com.google.inject.Inject;
@@ -12,6 +13,7 @@ import com.velocitypowered.api.proxy.ProxyServer;
 import org.slf4j.Logger;
 
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Set;
 
 @Plugin(
@@ -46,7 +48,29 @@ public final class MythicLoginVelocity {
                 this.dataDirectory,
                 Set.of("common", "velocity", "velocity-postgresql"),
                 this.logger::info,
-                this.logger::warn
+                this.logger::warn,
+                FrameworkRuntimeClassLoading.velocity(
+                        List.of(
+                                "cn.mythicland.mythiclogin.",
+                                "org.reflections.",
+                                "javassist.",
+                                "com.zaxxer.hikari.",
+                                "org.flywaydb.",
+                                "org.postgresql.",
+                                "org.sqlite.",
+                                "org.yaml.snakeyaml.",
+                                "com.resend.",
+                                "okhttp3.",
+                                "okio.",
+                                "kotlin.",
+                                "org.jetbrains.",
+                                "org.json.",
+                                "com.fasterxml.jackson.",
+                                "tools.jackson."
+                        ),
+                        List.of(MythicLoginVelocity.class.getName()),
+                        List.of("cn.mythicland.mythiclogin.bootstrap.")
+                )
         );
         this.runtimeBootstrap.load();
         this.runtimeBootstrap.enable();

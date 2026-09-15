@@ -1,7 +1,6 @@
 package cn.mythicland.mythiclogin;
 
 import cn.mythicland.framework.bukkit.BukkitComponentRegistrar;
-import cn.mythicland.framework.command.BukkitCommandRegistrar;
 import cn.mythicland.framework.command.CommandRouteCompiler;
 import cn.mythicland.framework.component.ComponentContainer;
 import cn.mythicland.framework.component.ComponentResolver;
@@ -112,12 +111,8 @@ final class LoaderBootstrap {
         Bukkit.getPluginManager().registerEvents(components.resolve(StartupGateListener.class), plugin);
     }
 
-    void registerCommands() {
-        BukkitCommandRegistrar.register(this.plugin, components);
-    }
-
     void registerListeners() {
-        BukkitComponentRegistrar.registerListeners(plugin, components);
+        BukkitComponentRegistrar.register(plugin, components);
     }
 
     void finishStartup() {

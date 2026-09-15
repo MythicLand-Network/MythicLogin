@@ -2,25 +2,18 @@ plugins {
     id 'com.gradleup.shadow'
 }
 
-configurations {
-    firstPartyEmbedded {
-        transitive = false
-    }
-}
+apply from: rootProject.file('dependencies/MythicFramework/gradle/runtime-library-manifest.gradle')
 
 dependencies {
-    implementation project(':common')
-    compileOnly 'cn.mythicland:mythic-framework-core:1.0.0'
     compileOnly 'com.zaxxer:HikariCP:4.0.3'
     compileOnly 'org.flywaydb:flyway-core:13.4.0'
     compileOnly 'org.yaml:snakeyaml:2.2'
 
-    firstPartyEmbedded project(':common')
-    firstPartyEmbedded 'cn.mythicland:mythic-framework-core:1.0.0'
+    firstParty project(':common')
+    firstParty 'cn.mythicland:mythic-framework-core:1.0.0'
 
     compileOnly 'com.velocitypowered:velocity-api:3.4.0-SNAPSHOT'
     annotationProcessor 'com.velocitypowered:velocity-api:3.4.0-SNAPSHOT'
-    testImplementation 'cn.mythicland:mythic-framework-core:1.0.0'
     testImplementation 'com.velocitypowered:velocity-api:3.4.0-SNAPSHOT'
 }
 

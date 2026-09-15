@@ -12,4 +12,4 @@ include 'bukkit'
 include 'velocity'
 include 'universal'
 
-includeBuild('../MythicFramework')
+includeBuild('dependencies/MythicFramework')

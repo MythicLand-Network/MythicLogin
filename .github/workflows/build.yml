@@ -17,4 +17,5 @@ jobs:
           distribution: temurin
           java-version: '21'
       - uses: gradle/actions/setup-gradle@v4
-      - run: ./gradlew clean check shadowJar
+      - run: ./gradlew clean check build
+      - run: test -f universal/build/libs/MythicLogin.jar
