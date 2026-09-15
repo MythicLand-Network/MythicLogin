@@ -1,11 +1,13 @@
 package cn.mythicland.mythiclogin.velocity.listener;
 
+import cn.mythicland.framework.component.InjectComponent;
 import cn.mythicland.mythiclogin.velocity.manager.IProxyRestrictionManager;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.DisconnectEvent;
 import com.velocitypowered.api.event.connection.PostLoginEvent;
 import com.velocitypowered.api.event.player.ServerConnectedEvent;
 
+@InjectComponent
 public final class ProxySessionListener {
 
     private final IProxyRestrictionManager proxyRestrictionManager;

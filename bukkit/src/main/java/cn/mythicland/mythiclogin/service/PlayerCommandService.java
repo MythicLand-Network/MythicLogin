@@ -1,5 +1,6 @@
 package cn.mythicland.mythiclogin.service;
 
+import cn.mythicland.framework.component.InjectComponent;
 import cn.mythicland.mythiclogin.config.key.MessageKey;
 import cn.mythicland.mythiclogin.util.CommandHelpTheme;
 import org.bukkit.command.CommandSender;
@@ -8,14 +9,22 @@ import org.bukkit.entity.Player;
 import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
 
+@InjectComponent
 public final class PlayerCommandService {
 
     private final AuthService authService;
     private final MessageService messageService;
+    private final EmailAuthService emailAuthService;
     private final Runnable reloadAction;
 
-    public PlayerCommandService(AuthService authService, MessageService messageService, Runnable reloadAction) {
+    public PlayerCommandService(
+            AuthService authService,
+            EmailAuthService emailAuthService,
+            MessageService messageService,
+            Runnable reloadAction
+    ) {
         this.authService = authService;
+        this.emailAuthService = emailAuthService;
         this.messageService = messageService;
         this.reloadAction = reloadAction;
     }
@@ -29,6 +38,8 @@ public final class PlayerCommandService {
             || isRegisterCommand(command.label())
             || isChangePasswordCommand(command.label())
             || isLogoutCommand(command.label())
+            || isBindCommand(command.label())
+            || isForgotPasswordCommand(command.label())
             || isAdminCommand(command.label());
     }
 
@@ -72,6 +83,37 @@ public final class PlayerCommandService {
             return true;
         }
 
+        if (isBindCommand(label)) {
+            if (parts.length != 3) {
+                sendBindHint(player);
+                return true;
+            }
+            String subCommand = parts[1].toLowerCase(Locale.ROOT);
+            if ("email".equals(subCommand)) {
+                bindEmail(player, parts[2]);
+                return true;
+            }
+            if ("code".equals(subCommand)) {
+                bindCode(player, parts[2]);
+                return true;
+            }
+            sendBindHint(player);
+            return true;
+        }
+
+        if (isForgotPasswordCommand(label)) {
+            if (parts.length == 1) {
+                requestPasswordReset(player);
+                return true;
+            }
+            if (parts.length == 4) {
+                resetPassword(player, parts[1], parts[2], parts[3]);
+                return true;
+            }
+            sendPasswordResetHint(player);
+            return true;
+        }
+
         if (isAdminCommand(label)) {
             handleAdminCommand(player, parts);
             return true;
@@ -86,6 +128,14 @@ public final class PlayerCommandService {
 
     public void sendChangePasswordHint(Player player) {
         player.sendMessage(authService.changePasswordHint(player));
+    }
+
+    public void sendBindHint(Player player) {
+        player.sendMessage(messageService.get(MessageKey.EMAIL_BIND_USAGE));
+    }
+
+    public void sendPasswordResetHint(Player player) {
+        player.sendMessage(messageService.get(MessageKey.EMAIL_RESET_USAGE));
     }
 
     public void login(Player player, String password) {
@@ -105,6 +155,25 @@ public final class PlayerCommandService {
 
     public void logout(Player player) {
         player.sendMessage(authService.logout(player));
+    }
+
+    public void bindEmail(Player player, String email) {
+        authService.sendMessageWhenComplete(player, emailAuthService.requestBinding(player, email));
+    }
+
+    public void bindCode(Player player, String code) {
+        authService.sendMessageWhenComplete(player, emailAuthService.verifyBinding(player, code));
+    }
+
+    public void requestPasswordReset(Player player) {
+        authService.sendMessageWhenComplete(player, emailAuthService.requestPasswordReset(player));
+    }
+
+    public void resetPassword(Player player, String code, String newPassword, String confirmation) {
+        authService.sendMessageWhenComplete(
+                player,
+                emailAuthService.resetPassword(player, code, newPassword, confirmation)
+        );
     }
 
     private void handleAdminCommand(Player player, String[] parts) {
@@ -222,6 +291,9 @@ public final class PlayerCommandService {
         CommandHelpTheme.sendUsage(sender, "/register <密码> <密码>");
         CommandHelpTheme.sendUsage(sender, "/logout");
         CommandHelpTheme.sendUsage(sender, "/cp <新密码> <重复新密码>");
+        CommandHelpTheme.sendUsage(sender, "/bind email <邮箱>");
+        CommandHelpTheme.sendUsage(sender, "/bind code <验证码>");
+        CommandHelpTheme.sendUsage(sender, "/fp [验证码] [新密码] [重复密码]");
         CommandHelpTheme.sendUsage(sender, "/mlg help");
         CommandHelpTheme.sendUsage(sender, "/mlg reload");
         CommandHelpTheme.sendUsage(sender, "/mlg password <玩家名> <新密码>");
@@ -259,6 +331,14 @@ public final class PlayerCommandService {
 
     private boolean isLogoutCommand(String label) {
         return "logout".equals(label);
+    }
+
+    private boolean isBindCommand(String label) {
+        return "bind".equals(label);
+    }
+
+    private boolean isForgotPasswordCommand(String label) {
+        return "forgotpassword".equals(label) || "fp".equals(label);
     }
 
     private boolean isAdminCommand(String label) {

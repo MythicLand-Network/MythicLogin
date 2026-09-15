@@ -1,62 +1,62 @@
 package cn.mythicland.mythiclogin;
 
-import cn.mythicland.mythiclogin.command.AdminCommands;
-import cn.mythicland.mythiclogin.command.AuthCommands;
-import cn.mythicland.mythiclogin.listener.CaseSensitiveAccountListener;
-import cn.mythicland.mythiclogin.listener.FallbackRestrictionListener;
-import cn.mythicland.mythiclogin.listener.PlayerConnectionListener;
-import cn.mythicland.mythiclogin.listener.SensitiveAuthCommandListener;
-import cn.mythicland.mythiclogin.listener.StartupGateListener;
-import cn.mythicland.mythiclogin.manager.ConfigManager;
-import cn.mythicland.mythiclogin.manager.DataManager;
-import cn.mythicland.mythiclogin.service.AuthService;
-import cn.mythicland.mythiclogin.service.AuthSessionManager;
-import cn.mythicland.mythiclogin.service.DisplayService;
-import cn.mythicland.mythiclogin.service.MessageService;
-import cn.mythicland.mythiclogin.service.PasswordService;
-import cn.mythicland.mythiclogin.service.PlayerCommandService;
-import cn.mythicland.mythiclogin.service.RestrictionService;
-import cn.mythicland.mythiclogin.service.StartupGateService;
-import cn.mythicland.mythiclogin.protocol.ProtocolGatekeeper;
-import cn.mythicland.mythiclogin.util.PluginLogger;
+import cn.mythicland.framework.bukkit.BukkitComponentRegistrar;
 import cn.mythicland.framework.command.BukkitCommandRegistrar;
 import cn.mythicland.framework.command.CommandRouteCompiler;
 import cn.mythicland.framework.component.ComponentContainer;
 import cn.mythicland.framework.component.ComponentResolver;
+import cn.mythicland.mythiclogin.email.EmailGateway;
+import cn.mythicland.mythiclogin.email.ResendEmailGateway;
+import cn.mythicland.mythiclogin.listener.StartupGateListener;
+import cn.mythicland.mythiclogin.manager.ConfigManager;
+import cn.mythicland.mythiclogin.manager.DataManager;
+import cn.mythicland.mythiclogin.service.AuthService;
+import cn.mythicland.mythiclogin.service.EmailAuthService;
+import cn.mythicland.mythiclogin.service.MessageService;
+import cn.mythicland.mythiclogin.service.StartupGateService;
+import cn.mythicland.mythiclogin.protocol.ProtocolGatekeeper;
+import cn.mythicland.mythiclogin.service.VerificationCodeService;
+import cn.mythicland.mythiclogin.util.PluginLogger;
 import com.comphenix.protocol.ProtocolLibrary;
 import org.bukkit.Bukkit;
 
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 final class LoaderBootstrap {
 
     private final MythicLogin plugin;
+    private final ComponentContainer components;
     private final PluginLogger pluginLogger;
     private final ConfigManager configManager;
     private final DataManager dataManager;
     private final MessageService messageService;
     private final StartupGateService startupGateService;
     private final AuthService authService;
-    private final PlayerCommandService playerCommandService;
+    private final EmailAuthService emailAuthService;
+    private final ProtocolGatekeeper protocolGatekeeper;
 
     private LoaderBootstrap(
         MythicLogin plugin,
+        ComponentContainer components,
         PluginLogger pluginLogger,
         ConfigManager configManager,
         DataManager dataManager,
         MessageService messageService,
         StartupGateService startupGateService,
         AuthService authService,
-        PlayerCommandService playerCommandService
+        EmailAuthService emailAuthService,
+        ProtocolGatekeeper protocolGatekeeper
     ) {
         this.plugin = plugin;
+        this.components = components;
         this.pluginLogger = pluginLogger;
         this.configManager = configManager;
         this.dataManager = dataManager;
         this.messageService = messageService;
         this.startupGateService = startupGateService;
         this.authService = authService;
-        this.playerCommandService = playerCommandService;
+        this.emailAuthService = emailAuthService;
+        this.protocolGatekeeper = protocolGatekeeper;
     }
 
     static LoaderBootstrap create(MythicLogin plugin) {
@@ -71,61 +71,57 @@ final class LoaderBootstrap {
             throw exception;
         }
 
-        MessageService messageService = new MessageService();
-        StartupGateService startupGateService = new StartupGateService(messageService);
-        AuthSessionManager authSessionManager = new AuthSessionManager();
-        DisplayService displayService = new DisplayService(plugin, configManager, messageService, logger);
-        RestrictionService restrictionService = new RestrictionService(plugin, configManager, authSessionManager);
-        PasswordService passwordService = new PasswordService();
-        AtomicReference<PlayerCommandService> playerCommandServiceReference = new AtomicReference<>();
-        ProtocolGatekeeper protocolGatekeeper = new ProtocolGatekeeper(
-            plugin,
-            ProtocolLibrary.getProtocolManager(),
-            authSessionManager,
-            configManager,
-            messageService,
-            playerCommandServiceReference::get,
-            logger
+        ComponentContainer components = new ComponentContainer();
+        components.bind(plugin);
+        components.bind(logger);
+        components.bind(configManager);
+        components.bind(dataManager);
+        components.bind(ProtocolLibrary.getProtocolManager());
+        components.bind(VerificationCodeService.class, new VerificationCodeService());
+        components.bind(EmailGateway.class, new ResendEmailGateway(configManager));
+        components.bind(Runnable.class, (Runnable) PluginLoader::reload);
+        components.bind(Consumer.class, (Consumer<Runnable>) action -> runMainThread(plugin, action));
+        components.bind(ComponentResolver.class, components);
+        components.bind(new CommandRouteCompiler(components));
+        components.scan(
+                "cn.mythicland.mythiclogin",
+                type -> !type.getName().startsWith("cn.mythicland.mythiclogin.velocity.")
         );
-        AuthService authService = new AuthService(
-            plugin,
-            logger,
-            configManager,
-            dataManager,
-            messageService,
-            passwordService,
-            displayService,
-            authSessionManager,
-            restrictionService,
-            protocolGatekeeper
+
+        MessageService messageService = components.resolve(MessageService.class);
+        StartupGateService startupGateService = components.resolve(StartupGateService.class);
+        AuthService authService = components.resolve(AuthService.class);
+        EmailAuthService emailAuthService = components.resolve(EmailAuthService.class);
+        emailAuthService.reload();
+        return new LoaderBootstrap(
+                plugin,
+                components,
+                logger,
+                configManager,
+                dataManager,
+                messageService,
+                startupGateService,
+                authService,
+                emailAuthService,
+                components.resolve(ProtocolGatekeeper.class)
         );
-        PlayerCommandService playerCommandService = new PlayerCommandService(authService, messageService, PluginLoader::reload);
-        playerCommandServiceReference.set(playerCommandService);
-        return new LoaderBootstrap(plugin, logger, configManager, dataManager, messageService, startupGateService, authService, playerCommandService);
     }
 
     void registerStartupGate() {
         startupGateService.markStarting();
-        Bukkit.getPluginManager().registerEvents(new StartupGateListener(startupGateService), plugin);
+        Bukkit.getPluginManager().registerEvents(components.resolve(StartupGateListener.class), plugin);
     }
 
     void registerCommands() {
-        ComponentContainer components = new ComponentContainer();
-        components.bind(ComponentResolver.class, components);
-        components.bind(new CommandRouteCompiler(components));
-        components.bind(new AuthCommands(this.playerCommandService));
-        components.bind(new AdminCommands(this.playerCommandService));
         BukkitCommandRegistrar.register(this.plugin, components);
     }
 
     void registerListeners() {
-        Bukkit.getPluginManager().registerEvents(new CaseSensitiveAccountListener(authService), plugin);
-        Bukkit.getPluginManager().registerEvents(new PlayerConnectionListener(authService), plugin);
-        Bukkit.getPluginManager().registerEvents(new SensitiveAuthCommandListener(playerCommandService), plugin);
-        Bukkit.getPluginManager().registerEvents(new FallbackRestrictionListener(authService, messageService), plugin);
+        BukkitComponentRegistrar.registerListeners(plugin, components);
     }
 
     void finishStartup() {
+        protocolGatekeeper.register();
         authService.start();
         startupGateService.markReady();
     }
@@ -134,11 +130,22 @@ final class LoaderBootstrap {
         configManager.reload();
         startupGateService.reload();
         dataManager.reload(configManager.getSettings().getDatabase());
+        emailAuthService.reload();
         authService.reload();
     }
 
     void beginShutdown() {
         startupGateService.markStarting();
+        protocolGatekeeper.unregister();
+        emailAuthService.clear();
+    }
+
+    private static void runMainThread(MythicLogin plugin, Runnable action) {
+        if (Bukkit.isPrimaryThread()) {
+            action.run();
+            return;
+        }
+        Bukkit.getScheduler().runTask(plugin, action);
     }
 
     PluginLogger getPluginLogger() {

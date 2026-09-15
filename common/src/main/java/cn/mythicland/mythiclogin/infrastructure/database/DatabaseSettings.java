@@ -74,6 +74,10 @@ public final class DatabaseSettings {
         return "jdbc:postgresql://" + this.host + ":" + this.port + "/" + this.name;
     }
 
+    public String driverClassName() {
+        return this.mode == DatabaseMode.SQLITE ? "org.sqlite.JDBC" : "org.postgresql.Driver";
+    }
+
     public DatabaseMode mode() {
         return this.mode;
     }

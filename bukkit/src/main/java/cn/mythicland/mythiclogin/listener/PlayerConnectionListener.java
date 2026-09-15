@@ -1,5 +1,7 @@
 package cn.mythicland.mythiclogin.listener;
 
+import cn.mythicland.framework.bukkit.ListenerComponent;
+import cn.mythicland.framework.component.InjectComponent;
 import cn.mythicland.mythiclogin.service.AuthService;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -9,6 +11,8 @@ import org.bukkit.event.player.PlayerKickEvent;
 import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
+@InjectComponent
+@ListenerComponent
 public final class PlayerConnectionListener implements Listener {
 
     private final AuthService authService;

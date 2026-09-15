@@ -61,6 +61,48 @@ public final class AuthCommands extends AbstractCommand {
         this.commandService.changePassword(player, context.argument(0), context.argument(1));
     }
 
+    @CommandRoute(path = {"bind", "email"}, usages = "/bind email <邮箱>", maxArguments = Integer.MAX_VALUE)
+    private void bindEmail(CommandContext context) {
+        Player player = this.requirePlayer(context);
+        if (player == null) return;
+        if (context.argumentCount() != 1) {
+            this.commandService.sendBindHint(player);
+            return;
+        }
+        this.commandService.bindEmail(player, context.argument(0));
+    }
+
+    @CommandRoute(path = {"bind", "code"}, usages = "/bind code <验证码>", maxArguments = Integer.MAX_VALUE)
+    private void bindCode(CommandContext context) {
+        Player player = this.requirePlayer(context);
+        if (player == null) return;
+        if (context.argumentCount() != 1) {
+            this.commandService.sendBindHint(player);
+            return;
+        }
+        this.commandService.bindCode(player, context.argument(0));
+    }
+
+    @CommandRoute(path = {"forgotpassword"}, usages = "/fp [验证码] [新密码] [重复密码]", maxArguments = Integer.MAX_VALUE)
+    private void forgotPassword(CommandContext context) {
+        Player player = this.requirePlayer(context);
+        if (player == null) return;
+        if (context.argumentCount() == 0) {
+            this.commandService.requestPasswordReset(player);
+            return;
+        }
+        if (context.argumentCount() == 3) {
+            this.commandService.resetPassword(
+                    player,
+                    context.argument(0),
+                    context.argument(1),
+                    context.argument(2)
+            );
+            return;
+        }
+        this.commandService.sendPasswordResetHint(player);
+    }
+
     private Player requirePlayer(CommandContext context) {
         if (context.sender() instanceof Player player) return player;
         context.sender().sendMessage("§c只有玩家可以使用这个命令。");

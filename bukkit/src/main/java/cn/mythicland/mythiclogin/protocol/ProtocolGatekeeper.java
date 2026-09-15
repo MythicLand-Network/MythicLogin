@@ -1,5 +1,6 @@
 package cn.mythicland.mythiclogin.protocol;
 
+import cn.mythicland.framework.component.InjectComponent;
 import cn.mythicland.mythiclogin.config.key.MessageKey;
 import cn.mythicland.mythiclogin.manager.ConfigManager;
 import cn.mythicland.mythiclogin.service.AuthSessionManager;
@@ -19,8 +20,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.function.Supplier;
 
+@InjectComponent
 public final class ProtocolGatekeeper {
 
     private final JavaPlugin plugin;
@@ -28,7 +29,7 @@ public final class ProtocolGatekeeper {
     private final AuthSessionManager authSessionManager;
     private final ConfigManager configManager;
     private final MessageService messageService;
-    private final Supplier<PlayerCommandService> playerCommandServiceSupplier;
+    private final PlayerCommandService playerCommandService;
     private final PluginLogger pluginLogger;
     private PacketAdapter adapter;
 
@@ -38,7 +39,7 @@ public final class ProtocolGatekeeper {
         AuthSessionManager authSessionManager,
         ConfigManager configManager,
         MessageService messageService,
-        Supplier<PlayerCommandService> playerCommandServiceSupplier,
+        PlayerCommandService playerCommandService,
         PluginLogger pluginLogger
     ) {
         this.plugin = plugin;
@@ -46,7 +47,7 @@ public final class ProtocolGatekeeper {
         this.authSessionManager = authSessionManager;
         this.configManager = configManager;
         this.messageService = messageService;
-        this.playerCommandServiceSupplier = playerCommandServiceSupplier;
+        this.playerCommandService = playerCommandService;
         this.pluginLogger = pluginLogger;
     }
 
@@ -109,8 +110,7 @@ public final class ProtocolGatekeeper {
         PacketContainer packet = event.getPacket();
         String message = packet.getStrings().read(0);
         Player player = event.getPlayer();
-        PlayerCommandService playerCommandService = playerCommandServiceSupplier.get();
-        if (playerCommandService != null && playerCommandService.isManagedCommand(message)) {
+        if (playerCommandService.isManagedCommand(message)) {
             event.setCancelled(true);
             Bukkit.getScheduler().runTask(plugin, () -> {
                 if (!player.isOnline()) {

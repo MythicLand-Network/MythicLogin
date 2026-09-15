@@ -15,6 +15,9 @@ commands:
   logout:
   changepassword:
     aliases: [changepass, cp]
+  bind:
+  forgotpassword:
+    aliases: [fp]
 permissions:
   mythiclogin.reload:
     description: Reload MythicLogin configs

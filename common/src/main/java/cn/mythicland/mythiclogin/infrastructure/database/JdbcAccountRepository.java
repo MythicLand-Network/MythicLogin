@@ -31,8 +31,13 @@ public final class JdbcAccountRepository implements AccountRepository {
     }
 
     @Override
+    public Optional<Account> findByEmailIgnoreCase(String email) {
+        return this.find("LOWER(email) = ?", normalize(email));
+    }
+
+    @Override
     public boolean create(Account account) {
-        String sql = "INSERT INTO " + this.table() + " (username, realname, password, ip, lastlogin, regdate, regip, is_logged, has_session) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO " + this.table() + " (username, realname, password, ip, lastlogin, regdate, regip, email, is_logged, has_session) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         return this.update(sql, statement -> {
             statement.setString(1, normalize(account.getUsername()));
             statement.setString(2, account.getRealName());
@@ -41,8 +46,9 @@ public final class JdbcAccountRepository implements AccountRepository {
             statement.setLong(5, account.getLastLogin());
             statement.setLong(6, account.getRegisterDate());
             statement.setString(7, account.getRegisterIp());
-            statement.setBoolean(8, account.isLogged());
-            statement.setBoolean(9, account.isHasSession());
+            statement.setString(8, account.getEmail());
+            statement.setBoolean(9, account.isLogged());
+            statement.setBoolean(10, account.isHasSession());
         });
     }
 
@@ -52,6 +58,35 @@ public final class JdbcAccountRepository implements AccountRepository {
             statement.setString(1, passwordHash);
             statement.setString(2, normalize(username));
         });
+    }
+
+    @Override
+    public boolean resetPassword(String username, String passwordHash) {
+        String sql = "UPDATE " + this.table() + " SET password = ?, has_session = ?, is_logged = ? WHERE username = ?";
+        return this.update(sql, statement -> {
+            statement.setString(1, passwordHash);
+            statement.setBoolean(2, false);
+            statement.setBoolean(3, false);
+            statement.setString(4, normalize(username));
+        });
+    }
+
+    @Override
+    public boolean updateEmailIfAvailable(String username, String email) {
+        String sql = "UPDATE " + this.table() + " SET email = ? WHERE username = ? AND NOT EXISTS "
+                + "(SELECT 1 FROM " + this.table() + " WHERE LOWER(email) = ? AND username <> ?)";
+        try (Connection connection = this.databaseManager.dataSource().getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            String normalizedUsername = normalize(username);
+            statement.setString(1, normalize(email));
+            statement.setString(2, normalizedUsername);
+            statement.setString(3, normalize(email));
+            statement.setString(4, normalizedUsername);
+            return statement.executeUpdate() > 0;
+        } catch (SQLException exception) {
+            if (isConstraintViolation(exception)) return false;
+            throw new IllegalStateException("Failed to update account email", exception);
+        }
     }
 
     @Override
@@ -103,7 +138,7 @@ public final class JdbcAccountRepository implements AccountRepository {
     }
 
     private Optional<Account> find(String predicate, String value) {
-        String sql = "SELECT username, realname, password, ip, lastlogin, regdate, regip, has_session, is_logged FROM " + this.table() + " WHERE " + predicate + " LIMIT 1";
+        String sql = "SELECT username, realname, password, ip, lastlogin, regdate, regip, email, has_session, is_logged FROM " + this.table() + " WHERE " + predicate + " LIMIT 1";
         try (Connection connection = this.databaseManager.dataSource().getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, value);
@@ -112,7 +147,8 @@ public final class JdbcAccountRepository implements AccountRepository {
                 return Optional.of(new Account(
                         result.getString("username"), result.getString("realname"), result.getString("password"),
                         result.getString("ip"), result.getLong("lastlogin"), result.getLong("regdate"),
-                        result.getString("regip"), result.getBoolean("has_session"), result.getBoolean("is_logged")
+                        result.getString("regip"), result.getString("email"),
+                        result.getBoolean("has_session"), result.getBoolean("is_logged")
                 ));
             }
         } catch (SQLException exception) {
@@ -136,6 +172,11 @@ public final class JdbcAccountRepository implements AccountRepository {
 
     private static String normalize(String playerName) {
         return playerName.toLowerCase(Locale.ROOT);
+    }
+
+    private static boolean isConstraintViolation(SQLException exception) {
+        String sqlState = exception.getSQLState();
+        return exception.getErrorCode() == 19 || (sqlState != null && sqlState.startsWith("23"));
     }
 
     @FunctionalInterface

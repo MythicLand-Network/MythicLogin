@@ -9,10 +9,15 @@ public final class Account {
     private final long lastLogin;
     private final long registerDate;
     private final String registerIp;
+    private final String email;
     private final boolean hasSession;
     private final boolean logged;
 
     public Account(String username, String realName, String password, String ip, long lastLogin, long registerDate, String registerIp, boolean hasSession, boolean logged) {
+        this(username, realName, password, ip, lastLogin, registerDate, registerIp, null, hasSession, logged);
+    }
+
+    public Account(String username, String realName, String password, String ip, long lastLogin, long registerDate, String registerIp, String email, boolean hasSession, boolean logged) {
         this.username = username;
         this.realName = realName;
         this.password = password;
@@ -20,6 +25,7 @@ public final class Account {
         this.lastLogin = lastLogin;
         this.registerDate = registerDate;
         this.registerIp = registerIp;
+        this.email = email;
         this.hasSession = hasSession;
         this.logged = logged;
     }
@@ -52,6 +58,10 @@ public final class Account {
         return registerIp;
     }
 
+    public String getEmail() {
+        return email;
+    }
+
     public boolean isHasSession() {
         return hasSession;
     }
@@ -61,14 +71,18 @@ public final class Account {
     }
 
     public Account withPassword(String newPassword) {
-        return new Account(username, realName, newPassword, ip, lastLogin, registerDate, registerIp, hasSession, logged);
+        return new Account(username, realName, newPassword, ip, lastLogin, registerDate, registerIp, email, hasSession, logged);
     }
 
     public Account withLoginMeta(String newIp, long newLastLogin, boolean session) {
-        return new Account(username, realName, password, newIp, newLastLogin, registerDate, registerIp, session, logged);
+        return new Account(username, realName, password, newIp, newLastLogin, registerDate, registerIp, email, session, logged);
     }
 
     public Account withLoggedState(boolean newLoggedState) {
-        return new Account(username, realName, password, ip, lastLogin, registerDate, registerIp, hasSession, newLoggedState);
+        return new Account(username, realName, password, ip, lastLogin, registerDate, registerIp, email, hasSession, newLoggedState);
+    }
+
+    public Account withEmail(String newEmail) {
+        return new Account(username, realName, password, ip, lastLogin, registerDate, registerIp, newEmail, hasSession, logged);
     }
 }

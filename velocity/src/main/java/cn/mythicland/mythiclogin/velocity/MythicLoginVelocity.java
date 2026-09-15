@@ -1,6 +1,7 @@
 package cn.mythicland.mythiclogin.velocity;
 
-import cn.mythicland.mythiclogin.bootstrap.RuntimeBootstrap;
+import cn.mythicland.framework.runtime.RuntimeBootstrap;
+import cn.mythicland.mythiclogin.bootstrap.RuntimeBootstrapFactory;
 import com.google.inject.Inject;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
@@ -39,10 +40,9 @@ public final class MythicLoginVelocity {
 
     @Subscribe
     public void onProxyInitialize(ProxyInitializeEvent event) {
-        this.runtimeBootstrap = new RuntimeBootstrap(
+        this.runtimeBootstrap = RuntimeBootstrapFactory.create(
                 this,
                 "cn.mythicland.mythiclogin.velocity.runtime.VelocityMainLoader",
-                MythicLoginVelocity.class,
                 this.dataDirectory,
                 Set.of("common", "velocity", "velocity-postgresql"),
                 this.logger::info,

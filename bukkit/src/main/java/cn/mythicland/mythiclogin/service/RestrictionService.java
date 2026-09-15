@@ -1,6 +1,6 @@
 package cn.mythicland.mythiclogin.service;
 
-import cn.mythicland.mythiclogin.manager.ConfigManager;
+import cn.mythicland.framework.component.InjectComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
+@InjectComponent
 public final class RestrictionService {
 
     private final JavaPlugin plugin;
@@ -20,7 +21,7 @@ public final class RestrictionService {
     private final Map<UUID, BukkitTask> restrictionWarmups = new ConcurrentHashMap<>();
     private BukkitTask restrictionTask;
 
-    public RestrictionService(JavaPlugin plugin, ConfigManager configManager, AuthSessionManager authSessionManager) {
+    public RestrictionService(JavaPlugin plugin, AuthSessionManager authSessionManager) {
         this.plugin = plugin;
         this.authSessionManager = authSessionManager;
     }

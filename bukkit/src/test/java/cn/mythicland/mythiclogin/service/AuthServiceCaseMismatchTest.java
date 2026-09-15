@@ -29,6 +29,32 @@ import static org.mockito.Mockito.when;
 class AuthServiceCaseMismatchTest {
 
     @Test
+    void shouldRecommendEmailBindingAfterLoginWhenAccountHasNoEmail() {
+        MessageService messageService = new MessageService();
+        AuthService authService = new AuthService(
+                null,
+                mock(PluginLogger.class),
+                mock(ConfigManager.class),
+                mock(DataManager.class),
+                messageService,
+                mock(PasswordService.class),
+                mock(DisplayService.class),
+                new AuthSessionManager(),
+                mock(RestrictionService.class),
+                mock(AccountNotificationService.class)
+        );
+        Account account = new Account(
+                "player", "Player", "hash", null, 1L, 1L, null, false, false
+        );
+
+        assertEquals(
+                messageService.get(MessageKey.AUTH_LOGIN_SUCCESS) + "\n"
+                        + messageService.get(MessageKey.AUTH_EMAIL_BIND_RECOMMENDED),
+                authService.loginSuccessMessage(account)
+        );
+    }
+
+    @Test
     void shouldRejectRegisterWhenOnlyCaseInsensitiveAccountExists() {
         PluginLogger pluginLogger = new PluginLogger(Logger.getLogger("AuthServiceCaseMismatchTest"), "Test");
         ConfigManager configManager = mock(ConfigManager.class);
@@ -66,7 +92,7 @@ class AuthServiceCaseMismatchTest {
                 null,
                 authSessionManager,
                 null,
-                null
+                mock(AccountNotificationService.class)
             );
 
             String result = authService.register(player, "secret123", "secret123").join();

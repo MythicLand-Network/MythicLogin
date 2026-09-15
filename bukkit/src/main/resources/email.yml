@@ -1,0 +1,8 @@
+resend:
+  api-key: ""
+  from: ""
+verification:
+  code-length: 6
+  expire-minutes: 5
+  resend-cooldown-seconds: 60
+  max-attempts: 5

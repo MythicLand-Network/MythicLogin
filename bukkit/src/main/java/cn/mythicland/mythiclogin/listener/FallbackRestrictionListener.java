@@ -1,5 +1,7 @@
 package cn.mythicland.mythiclogin.listener;
 
+import cn.mythicland.framework.bukkit.ListenerComponent;
+import cn.mythicland.framework.component.InjectComponent;
 import cn.mythicland.mythiclogin.config.key.MessageKey;
 import cn.mythicland.mythiclogin.service.AuthService;
 import cn.mythicland.mythiclogin.service.MessageService;
@@ -19,6 +21,8 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerItemHeldEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 
+@InjectComponent
+@ListenerComponent
 public final class FallbackRestrictionListener implements Listener {
 
     private final AuthService authService;

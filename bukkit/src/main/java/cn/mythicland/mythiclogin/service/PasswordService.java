@@ -1,10 +1,13 @@
 package cn.mythicland.mythiclogin.service;
 
+import cn.mythicland.framework.component.InjectComponent;
+
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 
+@InjectComponent
 public final class PasswordService {
 
     private final SecureRandom secureRandom = new SecureRandom();

@@ -1,10 +1,10 @@
 package cn.mythicland.mythiclogin.service;
 
+import cn.mythicland.framework.component.InjectComponent;
 import cn.mythicland.mythiclogin.config.model.DisplaySettings;
 import cn.mythicland.mythiclogin.model.AuthState;
 import cn.mythicland.mythiclogin.manager.ConfigManager;
 import cn.mythicland.mythiclogin.protocol.PacketDisplayAdapter;
-import cn.mythicland.mythiclogin.util.PluginLogger;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
+@InjectComponent
 public final class DisplayService {
 
     private static final int PERSISTENT_TITLE_FADE_IN = 0;
@@ -29,9 +30,14 @@ public final class DisplayService {
     private final Map<UUID, Long> failureTitleUntil = new ConcurrentHashMap<>();
     private final Map<UUID, BukkitTask> failureRestoreTasks = new ConcurrentHashMap<>();
 
-    public DisplayService(JavaPlugin plugin, ConfigManager configManager, MessageService messageService, PluginLogger pluginLogger) {
+    public DisplayService(
+            JavaPlugin plugin,
+            PacketDisplayAdapter packetDisplayAdapter,
+            ConfigManager configManager,
+            MessageService messageService
+    ) {
         this.plugin = plugin;
-        this.packetDisplayAdapter = new PacketDisplayAdapter(plugin, pluginLogger);
+        this.packetDisplayAdapter = packetDisplayAdapter;
         this.configManager = configManager;
         this.messageService = messageService;
     }

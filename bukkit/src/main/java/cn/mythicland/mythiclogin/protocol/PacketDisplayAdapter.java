@@ -1,5 +1,6 @@
 package cn.mythicland.mythiclogin.protocol;
 
+import cn.mythicland.framework.component.InjectComponent;
 import cn.mythicland.mythiclogin.common.util.TextUtil;
 import cn.mythicland.mythiclogin.util.PluginLogger;
 import com.comphenix.protocol.PacketType;
@@ -12,6 +13,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 
+@InjectComponent
 public final class PacketDisplayAdapter {
 
     private final ProtocolManager protocolManager;

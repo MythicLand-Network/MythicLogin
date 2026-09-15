@@ -11,6 +11,7 @@ import java.util.logging.Logger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -55,10 +56,36 @@ class JdbcAccountRepositoryTest {
         assertFalse(stored.isLogged());
         assertTrue(repository.updatePassword("tester", "new-hash"));
         assertEquals("new-hash", repository.findByExactPlayerName("Tester").orElseThrow().getPassword());
+        assertTrue(repository.updateEmailIfAvailable("tester", "Tester@Example.com"));
+        assertEquals("tester@example.com", repository.findByExactPlayerName("Tester").orElseThrow().getEmail());
+        assertEquals("Tester", repository.findByEmailIgnoreCase("TESTER@example.com").orElseThrow().getRealName());
         assertTrue(repository.updateLoggedState("tester", true));
         assertTrue(repository.isLogged("tester"));
+        assertTrue(repository.resetPassword("tester", "reset-hash"));
+        Account reset = repository.findByExactPlayerName("Tester").orElseThrow();
+        assertEquals("reset-hash", reset.getPassword());
+        assertFalse(reset.isHasSession());
+        assertFalse(reset.isLogged());
         assertTrue(repository.deleteByExactPlayerName("Tester"));
         assertEquals(Optional.empty(), repository.findByExactPlayerName("Tester"));
+    }
+
+    @Test
+    void shouldRejectEmailAlreadyBoundToAnotherAccount() {
+        DatabaseSettings settings = DatabaseSettings.sqlite(
+                this.temporaryDirectory.resolve("accounts.db"),
+                "accounts"
+        );
+        this.databaseManager = new DatabaseManager(Logger.getLogger("test"), settings, "MythicLoginTest");
+        JdbcAccountRepository repository = new JdbcAccountRepository(this.databaseManager, () -> settings);
+        Account first = new Account("first", "First", "hash", null, 0L, 0L, null, false, false);
+        Account second = new Account("second", "Second", "hash", null, 0L, 0L, null, false, false);
+
+        assertTrue(repository.create(first));
+        assertTrue(repository.create(second));
+        assertTrue(repository.updateEmailIfAvailable("first", "shared@example.com"));
+        assertFalse(repository.updateEmailIfAvailable("second", "SHARED@example.com"));
+        assertNull(repository.findByExactPlayerName("Second").orElseThrow().getEmail());
     }
 
     @Test

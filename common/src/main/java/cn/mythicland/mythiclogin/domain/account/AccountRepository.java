@@ -8,9 +8,15 @@ public interface AccountRepository {
 
     Optional<Account> findByPlayerNameIgnoreCase(String playerName);
 
+    Optional<Account> findByEmailIgnoreCase(String email);
+
     boolean create(Account account);
 
     boolean updatePassword(String username, String passwordHash);
+
+    boolean resetPassword(String username, String passwordHash);
+
+    boolean updateEmailIfAvailable(String username, String email);
 
     boolean updateLoginMeta(String username, String ip, long lastLogin, boolean hasSession);
 

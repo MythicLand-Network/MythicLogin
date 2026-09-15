@@ -22,3 +22,5 @@ restrictions:
     - /login
     - /reg
     - /register
+    - /fp
+    - /forgotpassword

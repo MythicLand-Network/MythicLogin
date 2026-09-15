@@ -1,7 +1,9 @@
 package cn.mythicland.mythiclogin.service;
 
+import cn.mythicland.framework.component.InjectComponent;
 import cn.mythicland.mythiclogin.config.key.MessageKey;
 
+@InjectComponent
 public final class StartupGateService {
 
     private final MessageService messageService;

@@ -1,5 +1,6 @@
 package cn.mythicland.mythiclogin.velocity.listener;
 
+import cn.mythicland.framework.component.InjectComponent;
 import cn.mythicland.mythiclogin.velocity.manager.IProxyRestrictionManager;
 import com.mojang.brigadier.tree.CommandNode;
 import com.mojang.brigadier.tree.RootCommandNode;
@@ -16,6 +17,7 @@ import java.util.Map;
 
 import java.lang.reflect.Field;
 
+@InjectComponent
 public final class ProxyCommandListener {
 
     private static final Field CHILDREN_FIELD = resolveField("children");

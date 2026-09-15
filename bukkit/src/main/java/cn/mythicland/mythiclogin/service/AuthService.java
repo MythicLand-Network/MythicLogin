@@ -1,12 +1,12 @@
 package cn.mythicland.mythiclogin.service;
 
+import cn.mythicland.framework.component.InjectComponent;
 import cn.mythicland.mythiclogin.domain.account.AccountRepository;
 import cn.mythicland.mythiclogin.domain.account.Account;
 import cn.mythicland.mythiclogin.config.key.MessageKey;
 import cn.mythicland.mythiclogin.manager.ConfigManager;
 import cn.mythicland.mythiclogin.manager.DataManager;
 import cn.mythicland.mythiclogin.model.AuthState;
-import cn.mythicland.mythiclogin.protocol.ProtocolGatekeeper;
 import cn.mythicland.mythiclogin.util.PluginLogger;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
@@ -19,6 +19,7 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
+@InjectComponent
 public final class AuthService {
 
     private final JavaPlugin plugin;
@@ -30,7 +31,7 @@ public final class AuthService {
     private final DisplayService displayService;
     private final AuthSessionManager authSessionManager;
     private final RestrictionService restrictionService;
-    private final ProtocolGatekeeper protocolGatekeeper;
+    private final AccountNotificationService accountNotificationService;
     private BukkitTask displayTask;
 
     public AuthService(
@@ -43,7 +44,7 @@ public final class AuthService {
         DisplayService displayService,
         AuthSessionManager authSessionManager,
         RestrictionService restrictionService,
-        ProtocolGatekeeper protocolGatekeeper
+        AccountNotificationService accountNotificationService
     ) {
         this.plugin = plugin;
         this.pluginLogger = pluginLogger;
@@ -54,13 +55,12 @@ public final class AuthService {
         this.displayService = displayService;
         this.authSessionManager = authSessionManager;
         this.restrictionService = restrictionService;
-        this.protocolGatekeeper = protocolGatekeeper;
+        this.accountNotificationService = accountNotificationService;
     }
 
     public void start() {
         startDisplayTask();
         restrictionService.start();
-        protocolGatekeeper.register();
         bootstrapOnlinePlayers();
     }
 
@@ -130,7 +130,7 @@ public final class AuthService {
     }
 
     private void applyJoinResult(Player player, Optional<Account> accountOptional) {
-        if (!accountOptional.isPresent()) {
+        if (accountOptional.isEmpty()) {
             setPending(player, AuthState.UNREGISTERED, null);
             messageService.send(player, MessageKey.AUTH_REGISTER_REQUIRED);
             return;
@@ -143,6 +143,7 @@ public final class AuthService {
             displayService.clear(player);
             displayService.showAutoLoginTitle(player);
             messageService.send(player, MessageKey.AUTH_AUTO_LOGIN_MESSAGE, player.getName());
+            sendEmailBindingRecommendation(player, account);
             updateLoginMetaAsync(account.getUsername(), address(player), System.currentTimeMillis(), true);
             updateLoggedStateAsync(account.getUsername(), true);
             return;
@@ -251,10 +252,14 @@ public final class AuthService {
             .thenApply(valid -> {
                 if (!valid) {
                     Bukkit.getScheduler().runTask(plugin, () -> displayService.showLoginFailureTitle(player));
-                    return messageService.get(MessageKey.AUTH_LOGIN_FAILED);
+                    MessageKey messageKey = context.getAccount().getEmail() == null
+                            || context.getAccount().getEmail().isBlank()
+                            ? MessageKey.AUTH_LOGIN_FAILED
+                            : MessageKey.AUTH_LOGIN_FAILED_WITH_RECOVERY;
+                    return messageService.get(messageKey);
                 }
                 Bukkit.getScheduler().runTask(plugin, () -> completeAuthentication(player, context.getAccount(), AuthState.PENDING_LOGIN));
-                return messageService.get(MessageKey.AUTH_LOGIN_SUCCESS);
+                return loginSuccessMessage(context.getAccount());
             });
     }
 
@@ -284,6 +289,7 @@ public final class AuthService {
                     plugin,
                     () -> syncAuthenticatedPassword(player, account.getUsername(), result.passwordHash())
             );
+            accountNotificationService.notifyPasswordChanged(account);
             return messageService.get(MessageKey.AUTH_PASSWORD_CHANGED);
         });
     }
@@ -416,6 +422,23 @@ public final class AuthService {
         updateLoggedStateAsync(updated.getUsername(), true);
     }
 
+    private void sendEmailBindingRecommendation(Player player, Account account) {
+        if (!hasBoundEmail(account)) {
+            messageService.send(player, MessageKey.AUTH_EMAIL_BIND_RECOMMENDED);
+        }
+    }
+
+    String loginSuccessMessage(Account account) {
+        String success = messageService.get(MessageKey.AUTH_LOGIN_SUCCESS);
+        return hasBoundEmail(account)
+                ? success
+                : success + "\n" + messageService.get(MessageKey.AUTH_EMAIL_BIND_RECOMMENDED);
+    }
+
+    private boolean hasBoundEmail(Account account) {
+        return account.getEmail() != null && !account.getEmail().isBlank();
+    }
+
     private void updateLoginMetaAsync(String username, String ip, long lastLogin, boolean hasSession) {
         CompletableFuture
                 .runAsync(
@@ -508,7 +531,6 @@ public final class AuthService {
     }
 
     public void shutdown() {
-        protocolGatekeeper.unregister();
         if (displayTask != null) {
             displayTask.cancel();
         }

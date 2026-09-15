@@ -55,6 +55,7 @@ public final class DatabaseManager {
     private HikariDataSource createDataSource(DatabaseSettings settings) {
         this.prepareSqliteDirectory(settings);
         HikariConfig config = new HikariConfig();
+        config.setDriverClassName(settings.driverClassName());
         config.setJdbcUrl(settings.jdbcUrl());
         config.setMaximumPoolSize(settings.maximumPoolSize());
         config.setPoolName(this.poolName);

@@ -14,6 +14,7 @@ dependencies {
     compileOnly 'cn.mythicland:mythic-framework-bukkit:1.0.0'
     compileOnly 'com.zaxxer:HikariCP:4.0.3'
     compileOnly 'org.flywaydb:flyway-core:13.4.0'
+    compileOnly 'com.resend:resend-java:4.24.0'
 
     firstPartyEmbedded project(':common')
     firstPartyEmbedded 'cn.mythicland:mythic-framework-core:1.0.0'
@@ -22,6 +23,10 @@ dependencies {
     compileOnly 'org.spigotmc:spigot-api:1.8.8-R0.1-SNAPSHOT'
     compileOnly 'net.dmulloy2:ProtocolLib:5.4.0'
     testImplementation 'org.spigotmc:spigot-api:1.8.8-R0.1-SNAPSHOT'
+    testImplementation 'cn.mythicland:mythic-framework-core:1.0.0'
+    testImplementation 'cn.mythicland:mythic-framework-bukkit:1.0.0'
+    testImplementation 'net.dmulloy2:ProtocolLib:5.4.0'
+    testImplementation 'com.resend:resend-java:4.24.0'
 }
 
 tasks.named('shadowJar') {

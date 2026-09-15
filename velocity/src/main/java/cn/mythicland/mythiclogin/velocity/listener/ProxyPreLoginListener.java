@@ -1,5 +1,6 @@
 package cn.mythicland.mythiclogin.velocity.listener;
 
+import cn.mythicland.framework.component.InjectComponent;
 import cn.mythicland.mythiclogin.velocity.manager.IProxyRestrictionManager;
 import cn.mythicland.mythiclogin.velocity.service.MessageService;
 import com.velocitypowered.api.event.Subscribe;
@@ -7,6 +8,7 @@ import com.velocitypowered.api.event.connection.PreLoginEvent;
 
 import java.util.Optional;
 
+@InjectComponent
 public final class ProxyPreLoginListener {
 
     private final IProxyRestrictionManager proxyRestrictionManager;

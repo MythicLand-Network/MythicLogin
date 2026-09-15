@@ -1,5 +1,6 @@
 package cn.mythicland.mythiclogin.service;
 
+import cn.mythicland.framework.component.InjectComponent;
 import cn.mythicland.mythiclogin.domain.account.Account;
 import cn.mythicland.mythiclogin.model.AuthState;
 import org.bukkit.entity.Player;
@@ -8,6 +9,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
+@InjectComponent
 public final class AuthSessionManager {
 
     private final Map<UUID, SessionContext> sessions = new ConcurrentHashMap<>();
@@ -27,6 +29,16 @@ public final class AuthSessionManager {
 
     public void authenticate(Player player, Account account) {
         sessions.put(player.getUniqueId(), SessionContext.authenticated(account));
+    }
+
+    public void replaceAccount(Player player, Account account) {
+        sessions.computeIfPresent(player.getUniqueId(), (ignored, context) ->
+                new SessionContext(context.state, account, context.deadlineMillis));
+    }
+
+    public void extendDeadline(Player player, long deadlineMillis) {
+        sessions.computeIfPresent(player.getUniqueId(), (ignored, context) ->
+                new SessionContext(context.state, context.account, Math.max(context.deadlineMillis, deadlineMillis)));
     }
 
     public SessionContext remove(Player player) {

@@ -1,11 +1,13 @@
 package cn.mythicland.mythiclogin.velocity.service;
 
+import cn.mythicland.framework.component.InjectComponent;
 import cn.mythicland.mythiclogin.common.util.TextUtil;
 import cn.mythicland.mythiclogin.velocity.config.key.MessageKey;
 import com.velocitypowered.api.proxy.Player;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
+@InjectComponent
 public final class MessageService {
 
     private static final LegacyComponentSerializer LEGACY_SERIALIZER = LegacyComponentSerializer.legacySection();

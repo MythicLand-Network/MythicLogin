@@ -8,6 +8,7 @@ configurations {
     commonRuntimeLibraries
     bukkitSqliteRuntimeLibraries
     bukkitPostgresqlRuntimeLibraries
+    bukkitEmailRuntimeLibraries
     velocityRuntimeLibraries
     velocityPostgresqlRuntimeLibraries
 }
@@ -16,7 +17,6 @@ dependencies {
     compileOnly 'cn.mythicland:mythic-framework-core:1.0.0'
     compileOnly 'com.zaxxer:HikariCP:4.0.3'
     compileOnly 'org.flywaydb:flyway-core:13.4.0'
-
     testImplementation 'com.zaxxer:HikariCP:4.0.3'
     testImplementation 'org.flywaydb:flyway-core:13.4.0'
     testRuntimeOnly 'org.flywaydb:flyway-database-postgresql:13.4.0'
@@ -29,6 +29,7 @@ dependencies {
     bukkitSqliteRuntimeLibraries 'org.xerial:sqlite-jdbc:3.46.1.3'
     bukkitPostgresqlRuntimeLibraries 'org.flywaydb:flyway-database-postgresql:13.4.0'
     bukkitPostgresqlRuntimeLibraries 'org.postgresql:postgresql:42.7.4'
+    bukkitEmailRuntimeLibraries 'com.resend:resend-java:4.24.0'
     velocityRuntimeLibraries 'org.yaml:snakeyaml:2.2'
     velocityPostgresqlRuntimeLibraries 'org.flywaydb:flyway-database-postgresql:13.4.0'
     velocityPostgresqlRuntimeLibraries 'org.postgresql:postgresql:42.7.4'
@@ -43,6 +44,7 @@ def runtimeDependencyManifest = registerRuntimeLibraryManifest(
                 common: configurations.commonRuntimeLibraries,
                 'bukkit-sqlite': configurations.bukkitSqliteRuntimeLibraries,
                 'bukkit-postgresql': configurations.bukkitPostgresqlRuntimeLibraries,
+                'bukkit-email': configurations.bukkitEmailRuntimeLibraries,
                 velocity: configurations.velocityRuntimeLibraries,
                 'velocity-postgresql': configurations.velocityPostgresqlRuntimeLibraries
         ]

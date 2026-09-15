@@ -1,5 +1,6 @@
 package cn.mythicland.mythiclogin.velocity.manager;
 
+import cn.mythicland.framework.component.InjectComponent;
 import cn.mythicland.mythiclogin.domain.account.AccountRepository;
 import cn.mythicland.mythiclogin.domain.account.Account;
 import cn.mythicland.mythiclogin.common.restriction.CommandListMatcher;
@@ -16,6 +17,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
+@InjectComponent
 public final class ProxyRestrictionManagerImpl implements IProxyRestrictionManager {
 
     private final PluginSettings settings;
