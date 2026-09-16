@@ -2,7 +2,7 @@ plugins {
     id 'java-library'
 }
 
-apply from: rootProject.file('dependencies/MythicFramework/gradle/runtime-library-manifest.gradle')
+apply from: rootProject.file('../MythicFramework/gradle/runtime-library-manifest.gradle')
 
 configurations {
     commonRuntimeLibraries
@@ -15,6 +15,8 @@ configurations {
 
 dependencies {
     compileOnly 'cn.mythicland:mythic-framework-core:1.0.0'
+    compileOnly 'cn.mythicland:mythic-framework-database:1.0.0'
+    testImplementation 'cn.mythicland:mythic-framework-database:1.0.0'
     compileOnly 'com.zaxxer:HikariCP:4.0.3'
     compileOnly 'org.flywaydb:flyway-core:13.4.0'
     testImplementation 'com.zaxxer:HikariCP:4.0.3'

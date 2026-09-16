@@ -1,12 +1,9 @@
 package cn.mythicland.mythiclogin.infrastructure.database;
 
-import com.zaxxer.hikari.HikariConfig;
-import com.zaxxer.hikari.HikariDataSource;
-import org.flywaydb.core.Flyway;
+import cn.mythicland.framework.database.DatabaseConfiguration;
 
 import javax.sql.DataSource;
-import java.io.IOException;
-import java.nio.file.Files;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.logging.Logger;
@@ -14,18 +11,18 @@ import java.util.logging.Logger;
 public final class DatabaseManager {
     private final Logger logger;
     private final String poolName;
-    private volatile HikariDataSource dataSource;
+    private volatile cn.mythicland.framework.database.DatabaseManager frameworkDatabase;
     private volatile DatabaseSettings settings;
 
     public DatabaseManager(Logger logger, DatabaseSettings settings, String poolName) {
         this.logger = Objects.requireNonNull(logger, "logger");
         this.settings = Objects.requireNonNull(settings, "settings");
         this.poolName = Objects.requireNonNull(poolName, "pool name");
-        this.dataSource = this.createDataSource(settings);
+        this.frameworkDatabase = this.createDataSource(settings);
     }
 
     public DataSource dataSource() {
-        return this.dataSource;
+        return this.frameworkDatabase.dataSource();
     }
 
     public DatabaseMode mode() {
@@ -35,64 +32,36 @@ public final class DatabaseManager {
     public void reloadIfNecessary(DatabaseSettings newSettings) {
         Objects.requireNonNull(newSettings, "new settings");
         if (newSettings.equals(this.settings)) return;
-        HikariDataSource replacement = this.createDataSource(newSettings);
-        HikariDataSource previous = this.dataSource;
+        cn.mythicland.framework.database.DatabaseManager replacement = this.createDataSource(newSettings);
+        cn.mythicland.framework.database.DatabaseManager previous = this.frameworkDatabase;
         this.settings = newSettings;
-        this.dataSource = replacement;
-        this.close(previous);
+        this.frameworkDatabase = replacement;
+        previous.close();
     }
 
     public void shutdown() {
-        this.close(this.dataSource);
+        this.frameworkDatabase.close();
     }
 
-    private void close(HikariDataSource source) {
-        if (source == null || source.isClosed()) return;
-        source.close();
-        this.logger.info(this.poolName + " database pool closed.");
-    }
-
-    private HikariDataSource createDataSource(DatabaseSettings settings) {
-        this.prepareSqliteDirectory(settings);
-        HikariConfig config = new HikariConfig();
-        config.setDriverClassName(settings.driverClassName());
-        config.setJdbcUrl(settings.jdbcUrl());
-        config.setMaximumPoolSize(settings.maximumPoolSize());
-        config.setPoolName(this.poolName);
-        if (settings.mode() == DatabaseMode.POSTGRESQL) {
-            config.setUsername(settings.username());
-            config.setPassword(settings.password());
-        } else {
-            config.setConnectionInitSql("PRAGMA foreign_keys = ON");
-        }
-        HikariDataSource candidate = new HikariDataSource(config);
-        try {
-            Flyway.configure()
-                    .dataSource(candidate)
-                    .locations("classpath:db/" + settings.mode().name().toLowerCase())
-                    .placeholders(Map.of("table", settings.table()))
-                    .load()
-                    .migrate();
-            return candidate;
-        } catch (RuntimeException exception) {
-            candidate.close();
-            throw new IllegalStateException("Failed to migrate " + settings.mode() + " database", exception);
-        }
-    }
-
-    private void prepareSqliteDirectory(DatabaseSettings settings) {
-        if (settings.mode() != DatabaseMode.SQLITE) return;
-        try {
-            PathSupport.createParentDirectories(settings.sqliteFile());
-        } catch (IOException exception) {
-            throw new IllegalStateException("Failed to create SQLite database directory", exception);
-        }
-    }
-
-    private static final class PathSupport {
-        private static void createParentDirectories(java.nio.file.Path file) throws IOException {
-            java.nio.file.Path parent = file.getParent();
-            if (parent != null) Files.createDirectories(parent);
-        }
+    private cn.mythicland.framework.database.DatabaseManager createDataSource(DatabaseSettings settings) {
+        cn.mythicland.framework.database.DatabaseMode mode = settings.mode()
+                == cn.mythicland.mythiclogin.infrastructure.database.DatabaseMode.SQLITE
+                ? cn.mythicland.framework.database.DatabaseMode.SQLITE
+                : cn.mythicland.framework.database.DatabaseMode.POSTGRESQL;
+        DatabaseConfiguration configuration = DatabaseConfiguration.builder(mode, settings.jdbcUrl())
+                .sqliteFile(settings.sqliteFile())
+                .credentials(settings.username(), settings.password())
+                .maximumPoolSize(settings.maximumPoolSize())
+                .minimumIdle(settings.maximumPoolSize())
+                .poolName(this.poolName)
+                .migrationLocations(List.of("classpath:db/" + settings.mode().name().toLowerCase()))
+                .placeholders(Map.of("table", settings.table()))
+                .build();
+        cn.mythicland.framework.database.DatabaseManager manager = new cn.mythicland.framework.database.DatabaseManager(
+                configuration,
+                this.logger
+        );
+        manager.start();
+        return manager;
     }
 }

@@ -2,7 +2,7 @@ plugins {
     id 'com.gradleup.shadow'
 }
 
-apply from: rootProject.file('dependencies/MythicFramework/gradle/runtime-library-manifest.gradle')
+apply from: rootProject.file('../MythicFramework/gradle/runtime-library-manifest.gradle')
 
 dependencies {
     firstParty project(':common')
@@ -10,6 +10,7 @@ dependencies {
     firstParty project(':velocity')
     firstParty 'cn.mythicland:mythic-framework-core:1.0.0'
     firstParty 'cn.mythicland:mythic-framework-bukkit:1.0.0'
+    firstParty 'cn.mythicland:mythic-framework-database:1.0.0'
 }
 
 tasks.named('shadowJar') {

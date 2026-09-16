@@ -1,5 +1,6 @@
 package cn.mythicland.mythiclogin.listener;
 
+import cn.mythicland.framework.bukkit.ListenerComponent;
 import cn.mythicland.framework.component.InjectComponent;
 import cn.mythicland.mythiclogin.service.StartupGateService;
 import org.bukkit.event.EventHandler;
@@ -9,6 +10,7 @@ import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 import org.bukkit.event.player.PlayerLoginEvent;
 
 @InjectComponent
+@ListenerComponent
 public final class StartupGateListener implements Listener {
 
     private final StartupGateService startupGateService;
