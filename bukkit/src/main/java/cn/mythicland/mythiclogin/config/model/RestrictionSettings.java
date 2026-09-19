@@ -14,7 +14,16 @@ public final class RestrictionSettings {
     private final int maxPasswordLength;
     private final boolean blockBungeeServerCommand;
 
-    public RestrictionSettings(List<String> commandPrefixWhitelist, boolean blockNonWhitelistTabComplete, boolean blockChat, boolean kickOnTimeout, int authTimeoutSeconds, int minPasswordLength, int maxPasswordLength, boolean blockBungeeServerCommand) {
+    public RestrictionSettings(
+            List<String> commandPrefixWhitelist,
+            boolean blockNonWhitelistTabComplete,
+            boolean blockChat,
+            boolean kickOnTimeout,
+            int authTimeoutSeconds,
+            int minPasswordLength,
+            int maxPasswordLength,
+            boolean blockBungeeServerCommand
+    ) {
         this.commandPrefixWhitelist = commandPrefixWhitelist;
         this.blockNonWhitelistTabComplete = blockNonWhitelistTabComplete;
         this.blockChat = blockChat;

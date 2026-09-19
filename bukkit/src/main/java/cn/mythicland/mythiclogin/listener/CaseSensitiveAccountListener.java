@@ -22,18 +22,14 @@ public final class CaseSensitiveAccountListener implements Listener {
 
     @EventHandler(priority = EventPriority.LOWEST)
     public void onAsyncPreLogin(AsyncPlayerPreLoginEvent event) {
-        if (event.getLoginResult() != AsyncPlayerPreLoginEvent.Result.ALLOWED) {
-            return;
-        }
+        if (event.getLoginResult() != AsyncPlayerPreLoginEvent.Result.ALLOWED) return;
 
         Optional<String> caseMismatchRealName = authService.findCaseMismatchRealName(event.getName());
-        if (!caseMismatchRealName.isPresent()) {
-            return;
-        }
+        if (caseMismatchRealName.isEmpty()) return;
 
         event.disallow(
-            AsyncPlayerPreLoginEvent.Result.KICK_OTHER,
-            authService.caseMismatchMessage(caseMismatchRealName.get())
+                AsyncPlayerPreLoginEvent.Result.KICK_OTHER,
+                authService.caseMismatchMessage(caseMismatchRealName.get())
         );
     }
 }

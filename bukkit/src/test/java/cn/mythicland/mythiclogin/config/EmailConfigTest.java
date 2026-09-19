@@ -23,10 +23,10 @@ class EmailConfigTest {
         EmailSettings settings = EmailConfig.parse(yaml);
 
         assertTrue(settings.isEnabled());
-        assertEquals(8, settings.getCodeLength());
-        assertEquals(10, settings.getExpireMinutes());
-        assertEquals(30, settings.getResendCooldownSeconds());
-        assertEquals(3, settings.getMaxAttempts());
+        assertEquals(8, settings.codeLength());
+        assertEquals(10, settings.expireMinutes());
+        assertEquals(30, settings.resendCooldownSeconds());
+        assertEquals(3, settings.maxAttempts());
     }
 
     @Test

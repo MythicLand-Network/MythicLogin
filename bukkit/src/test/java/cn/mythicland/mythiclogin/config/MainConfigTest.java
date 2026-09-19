@@ -23,7 +23,7 @@ class MainConfigTest {
 
         assertEquals(
                 tempDir.resolve("data/mythiclogin.db").toAbsolutePath().normalize(),
-                settings.getDatabase().sqliteFile()
+                settings.database().sqliteFile()
         );
     }
 
@@ -48,12 +48,12 @@ class MainConfigTest {
         PluginSettings settings = MainConfig.parse(yaml, tempDir);
         assertIterableEquals(
                 Arrays.asList("/login", "/reg"),
-                settings.getRestrictions().getCommandPrefixWhitelist()
+                settings.restrictions().getCommandPrefixWhitelist()
         );
         assertEquals(
                 "jdbc:postgresql://127.0.0.1:5432/mythiclogin",
-                settings.getDatabase().jdbcUrl()
+                settings.database().jdbcUrl()
         );
-        assertEquals("&7剩余时间: &f{0} &7秒", settings.getDisplay().getActionBarLoginText());
+        assertEquals("&7剩余时间: &f{0} &7秒", settings.display().getActionBarLoginText());
     }
 }

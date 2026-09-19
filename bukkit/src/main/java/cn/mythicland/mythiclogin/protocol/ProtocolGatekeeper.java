@@ -121,20 +121,20 @@ public final class ProtocolGatekeeper {
             return;
         }
         if (message.startsWith("/")) {
-            if (!configManager.getSettings().getRestrictions().isCommandAllowed(message)) {
+            if (!configManager.getSettings().restrictions().isCommandAllowed(message)) {
                 event.setCancelled(true);
                 messageService.send(player, MessageKey.AUTH_COMMAND_BLOCKED);
             }
             return;
         }
-        if (configManager.getSettings().getRestrictions().isBlockChat()) {
+        if (configManager.getSettings().restrictions().isBlockChat()) {
             event.setCancelled(true);
             messageService.send(player, MessageKey.RESTRICT_CHAT_BLOCKED);
         }
     }
 
     private void handleTabCompletePacket(PacketEvent event) {
-        if (!configManager.getSettings().getRestrictions().isBlockNonWhitelistTabComplete()) {
+        if (!configManager.getSettings().restrictions().isBlockNonWhitelistTabComplete()) {
             return;
         }
 
@@ -146,7 +146,7 @@ public final class ProtocolGatekeeper {
         if (trimmed.isEmpty()) return;
         if (message.charAt(0) != '/') return;
 
-        boolean allowed = configManager.getSettings().getRestrictions().isTabCompleteAllowed(message);
+        boolean allowed = configManager.getSettings().restrictions().isTabCompleteAllowed(message);
         event.setCancelled(true);
         if (!allowed) {
             return;
@@ -168,13 +168,13 @@ public final class ProtocolGatekeeper {
 
     private List<String> buildWhitelistSuggestions(String input) {
         List<String> filtered = new ArrayList<>();
-        String normalizedInput = configManager.getSettings().getRestrictions().normalizeCommandInput(input);
+        String normalizedInput = configManager.getSettings().restrictions().normalizeCommandInput(input);
         if (normalizedInput.indexOf(' ') >= 0) {
             return filtered;
         }
 
         String typed = input.substring(1);
-        for (String prefix : configManager.getSettings().getRestrictions().getCommandPrefixWhitelist()) {
+        for (String prefix : configManager.getSettings().restrictions().getCommandPrefixWhitelist()) {
             if (!"/".equals(normalizedInput) && !prefix.startsWith(normalizedInput)) {
                 continue;
             }

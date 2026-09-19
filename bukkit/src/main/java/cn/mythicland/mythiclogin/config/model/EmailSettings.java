@@ -2,19 +2,19 @@ package cn.mythicland.mythiclogin.config.model;
 
 import java.util.regex.Pattern;
 
-public final class EmailSettings {
+public record EmailSettings(
+        String apiKey,
+        String from,
+        int codeLength,
+        int expireMinutes,
+        int resendCooldownSeconds,
+        int maxAttempts
+) {
     private static final String ADDRESS_PATTERN =
             "[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}";
     private static final Pattern FROM_PATTERN = Pattern.compile(
             "^(?:" + ADDRESS_PATTERN + "|[^<>]+\\s<" + ADDRESS_PATTERN + ">)$"
     );
-
-    private final String apiKey;
-    private final String from;
-    private final int codeLength;
-    private final int expireMinutes;
-    private final int resendCooldownSeconds;
-    private final int maxAttempts;
 
     public EmailSettings(
             String apiKey,
@@ -30,30 +30,6 @@ public final class EmailSettings {
         this.expireMinutes = expireMinutes;
         this.resendCooldownSeconds = resendCooldownSeconds;
         this.maxAttempts = maxAttempts;
-    }
-
-    public String getApiKey() {
-        return apiKey;
-    }
-
-    public String getFrom() {
-        return from;
-    }
-
-    public int getCodeLength() {
-        return codeLength;
-    }
-
-    public int getExpireMinutes() {
-        return expireMinutes;
-    }
-
-    public int getResendCooldownSeconds() {
-        return resendCooldownSeconds;
-    }
-
-    public int getMaxAttempts() {
-        return maxAttempts;
     }
 
     public boolean isEnabled() {

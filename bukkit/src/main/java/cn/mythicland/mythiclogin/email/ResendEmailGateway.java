@@ -18,7 +18,7 @@ public final class ResendEmailGateway implements EmailGateway {
 
     public ResendEmailGateway(ConfigManager configManager) {
         this(configManager, (settings, options, requestOptions) ->
-                new Resend(settings.getApiKey()).emails().send(options, requestOptions));
+                new Resend(settings.apiKey()).emails().send(options, requestOptions));
     }
 
     ResendEmailGateway(ConfigManager configManager, ResendSender resendSender) {
@@ -30,7 +30,7 @@ public final class ResendEmailGateway implements EmailGateway {
     public void send(VerificationEmail email) throws EmailDeliveryException {
         EmailSettings settings = configManager.getEmailSettings();
         CreateEmailOptions options = CreateEmailOptions.builder()
-                .from(settings.getFrom())
+                .from(settings.from())
                 .to(email.recipient())
                 .subject(subject(email.purpose()))
                 .text(text(email))
@@ -50,7 +50,7 @@ public final class ResendEmailGateway implements EmailGateway {
     public void send(AccountNotificationEmail email) throws EmailDeliveryException {
         EmailSettings settings = configManager.getEmailSettings();
         CreateEmailOptions options = CreateEmailOptions.builder()
-                .from(settings.getFrom())
+                .from(settings.from())
                 .to(email.recipient())
                 .subject(notificationSubject(email.type()))
                 .text(notificationText(email))

@@ -44,7 +44,7 @@ class VerificationCodeServiceTest {
         assertEquals(60L, service.remainingCooldownSeconds(
                 playerId,
                 VerificationPurpose.BIND_EMAIL,
-                settings.getResendCooldownSeconds()
+                settings.resendCooldownSeconds()
         ));
         assertEquals(
                 VerificationCodeService.VerificationStatus.MISSING,

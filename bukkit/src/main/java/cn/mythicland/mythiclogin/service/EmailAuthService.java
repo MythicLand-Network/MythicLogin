@@ -153,7 +153,7 @@ public final class EmailAuthService {
                         player,
                         AuthState.PENDING_LOGIN,
                         updatedAccount,
-                        configManager.getSettings().getRestrictions().getAuthTimeoutSeconds()
+                        configManager.getSettings().restrictions().getAuthTimeoutSeconds()
                 );
             });
             accountNotificationService.notifyPasswordChanged(updatedAccount);
@@ -233,7 +233,7 @@ public final class EmailAuthService {
         long cooldownSeconds = verificationCodeService.remainingCooldownSeconds(
                 player.getUniqueId(),
                 purpose,
-                settings.getResendCooldownSeconds()
+                settings.resendCooldownSeconds()
         );
         if (cooldownSeconds > 0L) {
             return CompletableFuture.completedFuture(new SendResult(
@@ -261,7 +261,7 @@ public final class EmailAuthService {
                 targetEmail,
                 player.getName(),
                 challenge.code(),
-                settings.getExpireMinutes(),
+                settings.expireMinutes(),
                 "mythiclogin/" + purpose.name().toLowerCase(Locale.ROOT) + "/" + sendId
         );
         runMainThread(() -> messageService.send(player, MessageKey.EMAIL_SENDING));
@@ -293,14 +293,14 @@ public final class EmailAuthService {
 
     private boolean isPasswordLengthValid(String password) {
         int length = password.length();
-        return length >= configManager.getSettings().getRestrictions().getMinPasswordLength()
-                && length <= configManager.getSettings().getRestrictions().getMaxPasswordLength();
+        return length >= configManager.getSettings().restrictions().getMinPasswordLength()
+                && length <= configManager.getSettings().restrictions().getMaxPasswordLength();
     }
 
     private Object[] passwordBoundsPlaceholders() {
         return new Object[]{
-                configManager.getSettings().getRestrictions().getMinPasswordLength(),
-                configManager.getSettings().getRestrictions().getMaxPasswordLength()
+                configManager.getSettings().restrictions().getMinPasswordLength(),
+                configManager.getSettings().restrictions().getMaxPasswordLength()
         };
     }
 

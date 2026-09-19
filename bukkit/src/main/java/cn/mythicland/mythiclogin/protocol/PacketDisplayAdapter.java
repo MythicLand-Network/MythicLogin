@@ -25,9 +25,7 @@ public final class PacketDisplayAdapter {
     }
 
     public void sendActionBar(Player player, String text) {
-        if (text == null || text.trim().isEmpty()) {
-            return;
-        }
+        if (text == null || text.trim().isEmpty()) return;
         PacketContainer packet = protocolManager.createPacket(PacketType.Play.Server.CHAT);
         packet.getChatComponents().write(0, WrappedChatComponent.fromText(TextUtil.color(text)));
         packet.getBytes().write(0, (byte) 2);
@@ -37,9 +35,7 @@ public final class PacketDisplayAdapter {
     public void sendTitle(Player player, String title, String subtitle, int fadeIn, int stay, int fadeOut) {
         boolean blankTitle = title == null || title.trim().isEmpty();
         boolean blankSubtitle = subtitle == null || subtitle.trim().isEmpty();
-        if (blankTitle && blankSubtitle) {
-            return;
-        }
+        if (blankTitle && blankSubtitle) return;
 
         sendTitleTimes(player, fadeIn, stay, fadeOut);
 

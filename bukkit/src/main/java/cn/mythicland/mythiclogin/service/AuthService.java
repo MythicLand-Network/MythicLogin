@@ -81,7 +81,7 @@ public final class AuthService {
         if (displayTask != null) {
             displayTask.cancel();
         }
-        long interval = Math.max(1L, configManager.getSettings().getDisplay().getRefreshIntervalTicks());
+        long interval = Math.max(1L, configManager.getSettings().display().getRefreshIntervalTicks());
         displayTask = Bukkit.getScheduler().runTaskTimer(plugin, this::tickDisplays, interval, interval);
     }
 
@@ -154,12 +154,12 @@ public final class AuthService {
     }
 
     private void setPending(Player player, AuthState state, Account account) {
-        authSessionManager.setPending(player, state, account, configManager.getSettings().getRestrictions().getAuthTimeoutSeconds());
+        authSessionManager.setPending(player, state, account, configManager.getSettings().restrictions().getAuthTimeoutSeconds());
         restrictionService.applyRestrictedState(player);
     }
 
     private boolean shouldAutoLogin(Account account, Player player) {
-        if (!configManager.getSettings().getSession().isEnabled() || !account.isHasSession()) {
+        if (!configManager.getSettings().session().isEnabled() || !account.isHasSession()) {
             return false;
         }
         String currentIp = address(player);
@@ -167,7 +167,7 @@ public final class AuthService {
             return false;
         }
         long age = System.currentTimeMillis() - account.getLastLogin();
-        return age <= configManager.getSettings().getSession().getTimeoutMinutes() * 60_000L;
+        return age <= configManager.getSettings().session().getTimeoutMinutes() * 60_000L;
     }
 
     public void handleQuit(Player player) {
@@ -205,7 +205,7 @@ public final class AuthService {
 
         String playerName = player.getName();
         String playerAddress = address(player);
-        boolean sessionEnabled = configManager.getSettings().getSession().isEnabled();
+        boolean sessionEnabled = configManager.getSettings().session().isEnabled();
         return CompletableFuture.supplyAsync(() -> {
             Optional<String> caseMismatchRealName = findCaseMismatchRealName(playerName);
             if (caseMismatchRealName.isPresent()) {
@@ -384,8 +384,8 @@ public final class AuthService {
 
     public Object[] passwordBoundsPlaceholders() {
         return new Object[]{
-            configManager.getSettings().getRestrictions().getMinPasswordLength(),
-            configManager.getSettings().getRestrictions().getMaxPasswordLength()
+            configManager.getSettings().restrictions().getMinPasswordLength(),
+            configManager.getSettings().restrictions().getMaxPasswordLength()
         };
     }
 
@@ -413,7 +413,7 @@ public final class AuthService {
             return;
         }
         long now = System.currentTimeMillis();
-        Account updated = account.withLoginMeta(address(player), now, configManager.getSettings().getSession().isEnabled()).withLoggedState(true);
+        Account updated = account.withLoginMeta(address(player), now, configManager.getSettings().session().isEnabled()).withLoggedState(true);
         authSessionManager.authenticate(player, updated);
         restrictionService.clearRestrictedState(player);
         displayService.clear(player);
@@ -481,15 +481,15 @@ public final class AuthService {
         if (context != null && context.getAccount() != null) {
             updateLoggedStateAsync(context.getAccount().getUsername(), false);
         }
-        if (configManager.getSettings().getRestrictions().isKickOnTimeout()) {
+        if (configManager.getSettings().restrictions().isKickOnTimeout()) {
             player.kickPlayer(messageService.get(MessageKey.SYSTEM_TIMEOUT_KICK));
         }
     }
 
     private boolean validatePasswordLength(String password) {
         int length = password.length();
-        return length >= configManager.getSettings().getRestrictions().getMinPasswordLength()
-            && length <= configManager.getSettings().getRestrictions().getMaxPasswordLength();
+        return length >= configManager.getSettings().restrictions().getMinPasswordLength()
+            && length <= configManager.getSettings().restrictions().getMaxPasswordLength();
     }
 
     private void syncAuthenticatedPassword(Player player, String username, String passwordHash) {

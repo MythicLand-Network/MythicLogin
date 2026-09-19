@@ -35,13 +35,13 @@ public final class VerificationCodeService {
             String targetEmail,
             EmailSettings settings
     ) {
-        String code = generateCode(settings.getCodeLength());
-        long expiresAtMillis = currentTimeMillis.getAsLong() + settings.getExpireMinutes() * 60_000L;
+        String code = generateCode(settings.codeLength());
+        long expiresAtMillis = currentTimeMillis.getAsLong() + settings.expireMinutes() * 60_000L;
         PendingVerification pending = new PendingVerification(
                 targetEmail,
                 digest(code),
                 expiresAtMillis,
-                settings.getMaxAttempts(),
+                settings.maxAttempts(),
                 0
         );
         return new Challenge(new VerificationKey(playerId, purpose), code, pending, generation.get());

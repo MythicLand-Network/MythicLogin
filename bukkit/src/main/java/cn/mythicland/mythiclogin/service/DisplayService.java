@@ -61,7 +61,7 @@ public final class DisplayService {
     }
 
     public void renderCountdown(Player player, AuthState state, long deadlineMillis) {
-        DisplaySettings settings = configManager.getSettings().getDisplay();
+        DisplaySettings settings = configManager.getSettings().display();
         long remainingMillis = Math.max(0L, deadlineMillis - System.currentTimeMillis());
         int seconds = (int) Math.ceil(remainingMillis / 1000.0D);
 
@@ -71,7 +71,7 @@ public final class DisplayService {
     }
 
     public void showSuccessTitle(Player player, AuthState previousState) {
-        DisplaySettings settings = configManager.getSettings().getDisplay();
+        DisplaySettings settings = configManager.getSettings().display();
         String title = previousState == AuthState.UNREGISTERED ? settings.getRegisterTitle() : settings.getLoginTitle();
         String subtitle = previousState == AuthState.UNREGISTERED ? settings.getRegisterSubtitle() : settings.getLoginSubtitle();
         packetDisplayAdapter.sendTitle(
@@ -85,7 +85,7 @@ public final class DisplayService {
     }
 
     public void showAutoLoginTitle(Player player) {
-        DisplaySettings settings = configManager.getSettings().getDisplay();
+        DisplaySettings settings = configManager.getSettings().display();
         packetDisplayAdapter.sendTitle(
             player,
             messageService.format(settings.getAutoLoginTitle(), player.getName()),
@@ -97,7 +97,7 @@ public final class DisplayService {
     }
 
     public void showLoginFailureTitle(Player player) {
-        DisplaySettings settings = configManager.getSettings().getDisplay();
+        DisplaySettings settings = configManager.getSettings().display();
         packetDisplayAdapter.sendTitle(
             player,
             messageService.format(settings.getLoginFailureTitle(), player.getName()),
@@ -126,7 +126,7 @@ public final class DisplayService {
     }
 
     private void restoreLoginPrompt(Player player) {
-        DisplaySettings settings = configManager.getSettings().getDisplay();
+        DisplaySettings settings = configManager.getSettings().display();
         String title = messageService.format(settings.getCountdownLoginTitle(), player.getName());
         String subtitle = messageService.format(settings.getCountdownLoginSubtitle(), player.getName());
         packetDisplayAdapter.sendTitleTimes(player, PERSISTENT_TITLE_FADE_IN, PERSISTENT_TITLE_STAY, PERSISTENT_TITLE_FADE_OUT);

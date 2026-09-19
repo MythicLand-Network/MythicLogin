@@ -64,7 +64,7 @@ final class LoaderBootstrap {
 
         DataManager dataManager;
         try {
-            dataManager = new DataManager(logger, configManager.getSettings().getDatabase());
+            dataManager = new DataManager(logger, configManager.getSettings().database());
         } catch (IllegalStateException exception) {
             logger.severe("Failed to initialize MythicLogin database.", exception);
             throw exception;
@@ -124,7 +124,7 @@ final class LoaderBootstrap {
     void reload() {
         configManager.reload();
         startupGateService.reload();
-        dataManager.reload(configManager.getSettings().getDatabase());
+        dataManager.reload(configManager.getSettings().database());
         emailAuthService.reload();
         authService.reload();
     }

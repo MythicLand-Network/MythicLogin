@@ -166,7 +166,7 @@ class ProxyRestrictionManagerImplTest {
         );
 
         assertEquals(
-            Optional.of("\u00A7c检测到已有账号, 请使用正确的游戏账户 \u00A7fShanguanLinG \u00A7c登录。"),
+            Optional.of("\u00A7c检测到已有账号, 请使用正确的游戏账户 ShanguanLinG 登录。"),
             manager.findCaseMismatchKickMessage("shanguanling")
         );
     }
