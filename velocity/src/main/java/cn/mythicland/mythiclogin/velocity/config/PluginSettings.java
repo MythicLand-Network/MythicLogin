@@ -1,11 +1,13 @@
 package cn.mythicland.mythiclogin.velocity.config;
 
+import cn.mythicland.mythiclogin.common.premium.PremiumSettings;
 import cn.mythicland.mythiclogin.infrastructure.database.DatabaseSettings;
 import cn.mythicland.mythiclogin.domain.session.SessionSettings;
 import cn.mythicland.mythiclogin.common.restriction.ProxyCommandSettings;
 
 public final class PluginSettings {
 
+    private final PremiumSettings premium;
     private final DatabaseSettings database;
     private final SessionSettings session;
     private final LoginServerSettings loginServers;
@@ -17,10 +19,25 @@ public final class PluginSettings {
         LoginServerSettings loginServers,
         ProxyCommandSettings proxyCommands
     ) {
+        this(database, session, loginServers, proxyCommands, PremiumSettings.disabled());
+    }
+
+    public PluginSettings(
+            DatabaseSettings database,
+            SessionSettings session,
+            LoginServerSettings loginServers,
+            ProxyCommandSettings proxyCommands,
+            PremiumSettings premium
+    ) {
+        this.premium = premium;
         this.database = database;
         this.session = session;
         this.loginServers = loginServers;
         this.proxyCommands = proxyCommands;
+    }
+
+    public PremiumSettings getPremium() {
+        return premium;
     }
 
     public DatabaseSettings getDatabase() {

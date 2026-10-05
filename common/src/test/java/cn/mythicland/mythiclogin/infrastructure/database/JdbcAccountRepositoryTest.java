@@ -7,6 +7,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Path;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.logging.Logger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -86,6 +87,46 @@ class JdbcAccountRepositoryTest {
         assertTrue(repository.updateEmailIfAvailable("first", "shared@example.com"));
         assertFalse(repository.updateEmailIfAvailable("second", "SHARED@example.com"));
         assertNull(repository.findByExactPlayerName("Second").orElseThrow().getEmail());
+    }
+
+    @Test
+    void bindsOnlyTheUnchangedAccountAndPreservesPremiumIdentityInCopies() {
+        DatabaseSettings settings = DatabaseSettings.sqlite(temporaryDirectory.resolve("premium.db"), "accounts");
+        databaseManager = new DatabaseManager(Logger.getLogger("test"), settings, "MythicLoginTest");
+        JdbcAccountRepository repository = new JdbcAccountRepository(databaseManager, () -> settings);
+        Account account = new Account("tester", "Tester", "original-hash", null, 0, 1, null, false, false);
+        UUID uuid = UUID.randomUUID();
+        assertTrue(repository.create(account));
+        assertNull(repository.findByExactPlayerName("Tester").orElseThrow().getPremiumUuid());
+        assertFalse(repository.bindPremium(account.withPassword("wrong-hash"), uuid));
+        assertTrue(repository.bindPremium(account, uuid));
+        assertFalse(repository.bindPremium(account, UUID.randomUUID()));
+        Account bound = repository.findByExactPlayerName("Tester").orElseThrow();
+        assertEquals(uuid, bound.withPassword("changed").withEmail("email@example.com")
+                .withLoginMeta("127.0.0.1", 2, false).withLoggedState(true).getPremiumUuid());
+        repository.deleteByExactPlayerName("Tester");
+        Account replacement = new Account("tester", "Tester", "original-hash", null, 0, 3, null, false, false);
+        assertTrue(repository.create(replacement));
+        assertFalse(repository.bindPremium(account, uuid));
+    }
+
+    @Test
+    void unbindsOnlyTheUnchangedPremiumAccountAndSetsPassword() {
+        DatabaseSettings settings = DatabaseSettings.sqlite(temporaryDirectory.resolve("unbind.db"), "accounts");
+        databaseManager = new DatabaseManager(Logger.getLogger("test"), settings, "MythicLoginTest");
+        JdbcAccountRepository repository = new JdbcAccountRepository(databaseManager, () -> settings);
+        UUID uuid = UUID.randomUUID();
+        Account account = Account.premium("Tester", uuid, "127.0.0.1", 1);
+        assertTrue(repository.create(account));
+        assertFalse(repository.unbindPremium(account.withPremiumUuid(UUID.randomUUID()), "new-hash"));
+        assertFalse(repository.unbindPremium(account.withPassword("changed"), "new-hash"));
+        assertTrue(repository.unbindPremium(account, "new-hash"));
+        Account stored = repository.findByExactPlayerName("Tester").orElseThrow();
+        assertNull(stored.getPremiumUuid());
+        assertEquals("new-hash", stored.getPassword());
+        assertFalse(stored.isHasSession());
+        assertEquals(account.getRegisterDate(), stored.getRegisterDate());
+        assertFalse(repository.unbindPremium(account, "replacement-hash"));
     }
 
     @Test

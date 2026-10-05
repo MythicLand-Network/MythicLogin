@@ -26,7 +26,7 @@ public final class SensitiveAuthCommandListener implements Listener {
 
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     public void onCommand(PlayerCommandPreprocessEvent event) {
-        if (!authService.shouldRestrict(event.getPlayer())) return;
+        if (!authService.shouldRestrict(event.getPlayer()) && !playerCommandService.isPremiumCommand(event.getMessage())) return;
         if (playerCommandService.handle(event.getPlayer(), event.getMessage())) {
             event.setCancelled(true);
         }

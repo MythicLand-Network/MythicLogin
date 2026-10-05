@@ -1,5 +1,8 @@
 package cn.mythicland.mythiclogin.domain.account;
 
+import java.util.UUID;
+import java.util.Locale;
+
 public final class Account {
 
     private final String username;
@@ -12,6 +15,7 @@ public final class Account {
     private final String email;
     private final boolean hasSession;
     private final boolean logged;
+    private final UUID premiumUuid;
 
     public Account(String username, String realName, String password, String ip, long lastLogin, long registerDate, String registerIp, boolean hasSession, boolean logged) {
         this(username, realName, password, ip, lastLogin, registerDate, registerIp, null, hasSession, logged);
@@ -28,6 +32,34 @@ public final class Account {
         this.email = email;
         this.hasSession = hasSession;
         this.logged = logged;
+        this.premiumUuid = null;
+    }
+
+    public static Account premium(String playerName, UUID uuid, String ip, long now) {
+        return new Account(playerName.toLowerCase(Locale.ROOT), playerName, "!", ip, now, now, ip, false, false)
+                .withPremiumUuid(uuid);
+    }
+
+    private Account(Account account, UUID premiumUuid) {
+        this.username = account.username;
+        this.realName = account.realName;
+        this.password = account.password;
+        this.ip = account.ip;
+        this.lastLogin = account.lastLogin;
+        this.registerDate = account.registerDate;
+        this.registerIp = account.registerIp;
+        this.email = account.email;
+        this.hasSession = account.hasSession;
+        this.logged = account.logged;
+        this.premiumUuid = premiumUuid;
+    }
+
+    public UUID getPremiumUuid() {
+        return premiumUuid;
+    }
+
+    public Account withPremiumUuid(UUID uuid) {
+        return new Account(this, uuid);
     }
 
     public String getUsername() {
@@ -71,18 +103,22 @@ public final class Account {
     }
 
     public Account withPassword(String newPassword) {
-        return new Account(username, realName, newPassword, ip, lastLogin, registerDate, registerIp, email, hasSession, logged);
+        return new Account(username, realName, newPassword, ip, lastLogin, registerDate, registerIp, email, hasSession, logged)
+                .withPremiumUuid(premiumUuid);
     }
 
     public Account withLoginMeta(String newIp, long newLastLogin, boolean session) {
-        return new Account(username, realName, password, newIp, newLastLogin, registerDate, registerIp, email, session, logged);
+        return new Account(username, realName, password, newIp, newLastLogin, registerDate, registerIp, email, session, logged)
+                .withPremiumUuid(premiumUuid);
     }
 
     public Account withLoggedState(boolean newLoggedState) {
-        return new Account(username, realName, password, ip, lastLogin, registerDate, registerIp, email, hasSession, newLoggedState);
+        return new Account(username, realName, password, ip, lastLogin, registerDate, registerIp, email, hasSession, newLoggedState)
+                .withPremiumUuid(premiumUuid);
     }
 
     public Account withEmail(String newEmail) {
-        return new Account(username, realName, password, ip, lastLogin, registerDate, registerIp, newEmail, hasSession, logged);
+        return new Account(username, realName, password, ip, lastLogin, registerDate, registerIp, newEmail, hasSession, logged)
+                .withPremiumUuid(premiumUuid);
     }
 }

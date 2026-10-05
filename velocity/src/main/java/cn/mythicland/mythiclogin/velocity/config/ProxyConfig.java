@@ -1,5 +1,7 @@
 package cn.mythicland.mythiclogin.velocity.config;
 
+import cn.mythicland.framework.security.SignedPayload;
+import cn.mythicland.mythiclogin.common.premium.PremiumSettings;
 import cn.mythicland.mythiclogin.common.restriction.CommandAccessMode;
 import cn.mythicland.mythiclogin.common.restriction.ProxyCommandSettings;
 import cn.mythicland.mythiclogin.domain.session.SessionSettings;
@@ -19,6 +21,9 @@ public final class ProxyConfig extends AbstractYamlConfiguration {
 
     public void reload() {
         reloadYamlConfiguration();
+        if (getString("premium.shared-secret", "").isBlank()) {
+            saveString("premium.shared-secret", SignedPayload.generateSecret());
+        }
         settings = parse();
     }
 
@@ -56,7 +61,8 @@ public final class ProxyConfig extends AbstractYamlConfiguration {
                         ),
                         getStringList("restrictions.proxy-commands.whitelist"),
                         getStringList("restrictions.proxy-commands.blacklist")
-                )
+                ),
+                new PremiumSettings(getBoolean("premium.enabled", false), getString("premium.shared-secret", ""))
         );
     }
 

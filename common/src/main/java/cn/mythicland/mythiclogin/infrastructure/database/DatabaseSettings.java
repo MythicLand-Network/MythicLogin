@@ -5,7 +5,7 @@ import java.util.Objects;
 
 public final class DatabaseSettings {
     public static final String TABLE_NAME = "mythiclogin_accounts";
-    private static final int MAXIMUM_POOL_SIZE = 10;
+    private static final int MAXIMUM_POOL_SIZE = 4;
 
     private final DatabaseMode mode;
     private final Path sqliteFile;

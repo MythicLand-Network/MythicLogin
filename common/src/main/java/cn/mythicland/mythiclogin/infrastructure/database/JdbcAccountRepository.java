@@ -9,6 +9,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.function.Supplier;
 
 public final class JdbcAccountRepository implements AccountRepository {
@@ -37,7 +38,9 @@ public final class JdbcAccountRepository implements AccountRepository {
 
     @Override
     public boolean create(Account account) {
-        String sql = "INSERT INTO " + this.table() + " (username, realname, password, ip, lastlogin, regdate, regip, email, is_logged, has_session) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO " + this.table()
+                + " (username, realname, password, ip, lastlogin, regdate, regip, email, is_logged, has_session, premium_uuid)"
+                + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         return this.update(sql, statement -> {
             statement.setString(1, normalize(account.getUsername()));
             statement.setString(2, account.getRealName());
@@ -49,6 +52,35 @@ public final class JdbcAccountRepository implements AccountRepository {
             statement.setString(8, account.getEmail());
             statement.setBoolean(9, account.isLogged());
             statement.setBoolean(10, account.isHasSession());
+            statement.setString(11, account.getPremiumUuid() == null ? null : account.getPremiumUuid().toString());
+        });
+    }
+
+    @Override
+    public boolean bindPremium(Account expected, UUID premiumUuid) {
+        String sql = "UPDATE " + table() + " SET premium_uuid = ? WHERE username = ? AND realname = ?"
+                + " AND password = ? AND regdate = ? AND premium_uuid IS NULL";
+        return update(sql, statement -> {
+            statement.setString(1, premiumUuid.toString());
+            statement.setString(2, expected.getUsername());
+            statement.setString(3, expected.getRealName());
+            statement.setString(4, expected.getPassword());
+            statement.setLong(5, expected.getRegisterDate());
+        });
+    }
+
+    @Override
+    public boolean unbindPremium(Account expected, String passwordHash) {
+        String sql = "UPDATE " + table() + " SET premium_uuid = NULL, password = ?, has_session = ?"
+                + " WHERE username = ? AND realname = ? AND password = ? AND regdate = ? AND premium_uuid = ?";
+        return update(sql, statement -> {
+            statement.setString(1, passwordHash);
+            statement.setBoolean(2, false);
+            statement.setString(3, expected.getUsername());
+            statement.setString(4, expected.getRealName());
+            statement.setString(5, expected.getPassword());
+            statement.setLong(6, expected.getRegisterDate());
+            statement.setString(7, expected.getPremiumUuid().toString());
         });
     }
 
@@ -138,18 +170,21 @@ public final class JdbcAccountRepository implements AccountRepository {
     }
 
     private Optional<Account> find(String predicate, String value) {
-        String sql = "SELECT username, realname, password, ip, lastlogin, regdate, regip, email, has_session, is_logged FROM " + this.table() + " WHERE " + predicate + " LIMIT 1";
+        String sql = "SELECT username, realname, password, ip, lastlogin, regdate, regip, email, has_session, is_logged, premium_uuid FROM "
+                + this.table() + " WHERE " + predicate + " LIMIT 1";
         try (Connection connection = this.databaseManager.dataSource().getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, value);
             try (ResultSet result = statement.executeQuery()) {
                 if (!result.next()) return Optional.empty();
-                return Optional.of(new Account(
+                String premiumUuid = result.getString("premium_uuid");
+                Account account = new Account(
                         result.getString("username"), result.getString("realname"), result.getString("password"),
                         result.getString("ip"), result.getLong("lastlogin"), result.getLong("regdate"),
                         result.getString("regip"), result.getString("email"),
                         result.getBoolean("has_session"), result.getBoolean("is_logged")
-                ));
+                );
+                return Optional.of(account.withPremiumUuid(premiumUuid == null ? null : UUID.fromString(premiumUuid)));
             }
         } catch (SQLException exception) {
             throw new IllegalStateException("Failed to load account " + value, exception);

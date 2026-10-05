@@ -9,6 +9,7 @@ import cn.mythicland.mythiclogin.velocity.config.LoginServerSettings;
 import cn.mythicland.mythiclogin.velocity.config.PluginSettings;
 import cn.mythicland.mythiclogin.domain.session.SessionSettings;
 import cn.mythicland.mythiclogin.velocity.service.MessageService;
+import cn.mythicland.mythiclogin.velocity.service.PremiumProxyService;
 import cn.mythicland.mythiclogin.velocity.util.PluginLogger;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ServerConnection;
@@ -55,7 +56,8 @@ class ProxyRestrictionManagerImplTest {
             settings,
             messageService,
             accountRepository,
-            pluginLogger
+            pluginLogger,
+            mock(PremiumProxyService.class)
         );
 
         when(accountRepository.findByExactPlayerName("Tester")).thenReturn(Optional.empty());
@@ -118,7 +120,8 @@ class ProxyRestrictionManagerImplTest {
             settings,
             messageService,
             accountRepository,
-            pluginLogger
+            pluginLogger,
+            mock(PremiumProxyService.class)
         );
 
         mockCurrentServer(player, "survival");
@@ -162,7 +165,8 @@ class ProxyRestrictionManagerImplTest {
             settings,
             messageService,
             accountRepository,
-            pluginLogger
+            pluginLogger,
+            mock(PremiumProxyService.class)
         );
 
         assertEquals(

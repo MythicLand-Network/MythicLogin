@@ -7,6 +7,7 @@ import cn.mythicland.mythiclogin.common.restriction.CommandListMatcher;
 import cn.mythicland.mythiclogin.velocity.config.PluginSettings;
 import cn.mythicland.mythiclogin.velocity.config.key.MessageKey;
 import cn.mythicland.mythiclogin.velocity.service.MessageService;
+import cn.mythicland.mythiclogin.velocity.service.PremiumProxyService;
 import cn.mythicland.mythiclogin.velocity.util.PluginLogger;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ServerConnection;
@@ -24,6 +25,7 @@ public final class ProxyRestrictionManagerImpl implements IProxyRestrictionManag
     private final MessageService messageService;
     private final AccountRepository accountRepository;
     private final PluginLogger pluginLogger;
+    private final PremiumProxyService premium;
     private final Set<UUID> authenticatedPlayers = ConcurrentHashMap.newKeySet();
     private final Set<UUID> missingAccountWarnedPlayers = ConcurrentHashMap.newKeySet();
 
@@ -31,12 +33,14 @@ public final class ProxyRestrictionManagerImpl implements IProxyRestrictionManag
         PluginSettings settings,
         MessageService messageService,
         AccountRepository accountRepository,
-        PluginLogger pluginLogger
+        PluginLogger pluginLogger,
+        PremiumProxyService premium
     ) {
         this.settings = settings;
         this.messageService = messageService;
         this.accountRepository = accountRepository;
         this.pluginLogger = pluginLogger;
+        this.premium = premium;
     }
 
     @Override
@@ -132,6 +136,9 @@ public final class ProxyRestrictionManagerImpl implements IProxyRestrictionManag
     }
 
     private AuthDecision evaluateAuthentication(Player player, String source) {
+        if (settings.getPremium().enabled() && premium.isAuthenticated(player)) {
+            return new AuthDecision(true, AuthStatus.AUTHENTICATED, "premium", null);
+        }
         boolean cacheHit = authenticatedPlayers.contains(player.getUniqueId());
         try {
             Optional<Account> accountOptional = accountRepository.findByExactPlayerName(player.getUsername());

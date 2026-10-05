@@ -41,7 +41,8 @@ class AuthServiceCaseMismatchTest {
                 mock(DisplayService.class),
                 new AuthSessionManager(),
                 mock(RestrictionService.class),
-                mock(AccountNotificationService.class)
+                mock(AccountNotificationService.class),
+                mock(PremiumBridge.class)
         );
         Account account = new Account(
                 "player", "Player", "hash", null, 1L, 1L, null, false, false
@@ -92,7 +93,8 @@ class AuthServiceCaseMismatchTest {
                 null,
                 authSessionManager,
                 null,
-                mock(AccountNotificationService.class)
+                mock(AccountNotificationService.class),
+                mock(PremiumBridge.class)
             );
 
             String result = authService.register(player, "secret123", "secret123").join();

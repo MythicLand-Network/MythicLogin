@@ -1,6 +1,7 @@
 package cn.mythicland.mythiclogin.domain.account;
 
 import java.util.Optional;
+import java.util.UUID;
 
 public interface AccountRepository {
 
@@ -11,6 +12,10 @@ public interface AccountRepository {
     Optional<Account> findByEmailIgnoreCase(String email);
 
     boolean create(Account account);
+
+    boolean bindPremium(Account expected, UUID premiumUuid);
+
+    boolean unbindPremium(Account expected, String passwordHash);
 
     boolean updatePassword(String username, String passwordHash);
 

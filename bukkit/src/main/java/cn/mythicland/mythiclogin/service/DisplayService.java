@@ -96,6 +96,42 @@ public final class DisplayService {
         );
     }
 
+    public void showPremiumReconnectTitle(Player player) {
+        showPremiumTitle(player, "&e请重新连接", "&7请在 &f60 &7秒内使用正版客户端重新进入");
+    }
+
+    public void showPremiumBoundTitle(Player player) {
+        showPremiumTitle(player, "&a绑定成功", "&7已为您开启正版免登录。");
+    }
+
+    public void showPremiumFailureTitle(Player player, String reason) {
+        showPremiumTitle(player, "&c绑定失败", "&7" + reason);
+    }
+
+    public void showPremiumUnboundTitle(Player player) {
+        showPremiumTitle(player, "&a取消成功", "&7已为您关闭正版免登录。");
+    }
+
+    public void showPremiumUnbindFailureTitle(Player player, String reason) {
+        showPremiumTitle(player, "&c取消失败", "&7" + reason);
+    }
+
+    private void showPremiumTitle(Player player, String title, String subtitle) {
+        clear(player);
+        DisplaySettings settings = configManager.getSettings().display();
+        packetDisplayAdapter.sendTitle(player, messageService.format(title), messageService.format(subtitle),
+                settings.getTitleFadeIn(), settings.getTitleStay(), settings.getTitleFadeOut());
+    }
+
+    public void showPasswordFailureTitle(Player player) {
+        clear(player);
+        DisplaySettings settings = configManager.getSettings().display();
+        packetDisplayAdapter.sendTitle(player,
+                messageService.format(settings.getLoginFailureTitle(), player.getName()),
+                messageService.format(settings.getLoginFailureSubtitle(), player.getName()),
+                settings.getLoginFailureFadeIn(), settings.getLoginFailureStay(), settings.getLoginFailureFadeOut());
+    }
+
     public void showLoginFailureTitle(Player player) {
         DisplaySettings settings = configManager.getSettings().display();
         packetDisplayAdapter.sendTitle(

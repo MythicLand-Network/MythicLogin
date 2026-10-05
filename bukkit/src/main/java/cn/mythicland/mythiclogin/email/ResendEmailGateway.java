@@ -71,12 +71,12 @@ public final class ResendEmailGateway implements EmailGateway {
     }
 
     private String text(VerificationEmail email) {
-        return "您好，玩家 " + email.playerName() + "：\n\n"
+        return "您好, 玩家 " + email.playerName() + "：\n\n"
                 + "您正在进行 MythicLand Network " + operationName(email.purpose()) + "操作。\n\n"
                 + "验证码：" + email.code() + "\n"
                 + "有效期：" + email.expireMinutes() + " 分钟\n\n"
-                + "请勿将验证码告知他人。如非本人操作，请忽略此邮件。\n\n"
-                + "此邮件由系统自动发送，请勿回复。";
+                + "请勿将验证码告知他人。如非本人操作, 请忽略此邮件。\n\n"
+                + "此邮件由系统自动发送, 请勿回复。";
     }
 
     private String html(VerificationEmail email) {
@@ -84,17 +84,17 @@ public final class ResendEmailGateway implements EmailGateway {
                 + "font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;"
                 + "color:#1f2937;line-height:1.7\">"
                 + "<h2 style=\"margin:0 0 24px;color:#111827\">MythicLand Network</h2>"
-                + "<p>您好，玩家 <strong>" + email.playerName() + "</strong>：</p>"
-                + "<p>您正在进行 MythicLand Network " + operationName(email.purpose()) + "操作，"
+                + "<p>您好, 玩家 <strong>" + email.playerName() + "</strong>：</p>"
+                + "<p>您正在进行 MythicLand Network " + operationName(email.purpose()) + "操作, "
                 + "请使用以下验证码完成验证：</p>"
                 + "<div style=\"margin:24px 0;padding:20px;text-align:center;background:#f3f4f6;"
                 + "border-radius:8px;font-size:32px;font-weight:700;letter-spacing:8px;color:#111827\">"
                 + email.code() + "</div>"
-                + "<p>该验证码将在 <strong>" + email.expireMinutes() + " 分钟 </strong>后失效，"
+                + "<p>该验证码将在 <strong>" + email.expireMinutes() + " 分钟 </strong>后失效, "
                 + "请勿将验证码告知他人。</p>"
-                + "<p>如非本人操作，请忽略此邮件。</p>"
+                + "<p>如非本人操作, 请忽略此邮件。</p>"
                 + "<hr style=\"margin:28px 0;border:0;border-top:1px solid #e5e7eb\">"
-                + "<p style=\"margin:0;color:#6b7280;font-size:13px\">此邮件由系统自动发送，请勿回复。</p>"
+                + "<p style=\"margin:0;color:#6b7280;font-size:13px\">此邮件由系统自动发送, 请勿回复。</p>"
                 + "</div>";
     }
 
@@ -110,34 +110,34 @@ public final class ResendEmailGateway implements EmailGateway {
 
     private String notificationText(AccountNotificationEmail email) {
         if (email.type() == AccountNotificationType.PASSWORD_CHANGED) {
-            return "您好，玩家 " + email.playerName() + "：\n\n"
+            return "您好, 玩家 " + email.playerName() + "：\n\n"
                     + "您的 MythicLand Network 账号密码已成功修改。\n\n"
-                    + "如为本人操作，无需进行其他处理。如非本人操作，请尽快进入服务器使用 /fp 重置密码，"
+                    + "如为本人操作, 无需进行其他处理。如非本人操作, 请尽快进入服务器使用 /fp 重置密码, "
                     + "并联系服务器管理员。\n\n"
-                    + "此邮件由系统自动发送，请勿回复。";
+                    + "此邮件由系统自动发送, 请勿回复。";
         }
-        return "您好，玩家 " + email.playerName() + "：\n\n"
-                + "您的 MythicLand Network 账号已成功更换绑定邮箱，此邮箱将不再接收验证码及安全通知。\n\n"
-                + "如非本人操作，请尽快联系服务器管理员。\n\n"
-                + "此邮件由系统自动发送，请勿回复。";
+        return "您好, 玩家 " + email.playerName() + "：\n\n"
+                + "您的 MythicLand Network 账号已成功更换绑定邮箱, 此邮箱将不再接收验证码及安全通知。\n\n"
+                + "如非本人操作, 请尽快联系服务器管理员。\n\n"
+                + "此邮件由系统自动发送, 请勿回复。";
     }
 
     private String notificationHtml(AccountNotificationEmail email) {
         String detail = email.type() == AccountNotificationType.PASSWORD_CHANGED
                 ? "<p>您的 MythicLand Network 账号密码已成功修改。</p>"
-                + "<p>如为本人操作，无需进行其他处理。如非本人操作，请尽快进入服务器使用 "
-                + "<strong>/fp</strong> 重置密码，并联系服务器管理员。</p>"
-                : "<p>您的 MythicLand Network 账号已成功更换绑定邮箱，"
+                + "<p>如为本人操作, 无需进行其他处理。如非本人操作, 请尽快进入服务器使用 "
+                + "<strong>/fp</strong> 重置密码, 并联系服务器管理员。</p>"
+                : "<p>您的 MythicLand Network 账号已成功更换绑定邮箱, "
                 + "此邮箱将不再接收验证码及安全通知。</p>"
-                + "<p>如非本人操作，请尽快联系服务器管理员。</p>";
+                + "<p>如非本人操作, 请尽快联系服务器管理员。</p>";
         return "<div style=\"max-width:560px;margin:0 auto;padding:32px;"
                 + "font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;"
                 + "color:#1f2937;line-height:1.7\">"
                 + "<h2 style=\"margin:0 0 24px;color:#111827\">MythicLand Network</h2>"
-                + "<p>您好，玩家 <strong>" + email.playerName() + "</strong>：</p>"
+                + "<p>您好, 玩家 <strong>" + email.playerName() + "</strong>：</p>"
                 + detail
                 + "<hr style=\"margin:28px 0;border:0;border-top:1px solid #e5e7eb\">"
-                + "<p style=\"margin:0;color:#6b7280;font-size:13px\">此邮件由系统自动发送，请勿回复。</p>"
+                + "<p style=\"margin:0;color:#6b7280;font-size:13px\">此邮件由系统自动发送, 请勿回复。</p>"
                 + "</div>";
     }
 

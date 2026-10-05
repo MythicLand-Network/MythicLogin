@@ -13,7 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 final class SensitiveAuthCommandListenerTest {
@@ -31,7 +31,8 @@ final class SensitiveAuthCommandListenerTest {
         new SensitiveAuthCommandListener(authService, commandService).onCommand(event);
 
         assertFalse(event.isCancelled());
-        verifyNoInteractions(commandService);
+        verify(commandService).isPremiumCommand("/login secret");
+        verifyNoMoreInteractions(commandService);
     }
 
     @Test

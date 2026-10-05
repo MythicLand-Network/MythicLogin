@@ -36,6 +36,6 @@ class DatabaseSettingsTest {
         assertEquals(DatabaseMode.POSTGRESQL, settings.mode());
         assertEquals("jdbc:postgresql://127.0.0.1:5432/mythiclogin", settings.jdbcUrl());
         assertEquals("org.postgresql.Driver", settings.driverClassName());
-        assertEquals(10, settings.maximumPoolSize());
+        assertEquals(4, settings.maximumPoolSize());
     }
 }

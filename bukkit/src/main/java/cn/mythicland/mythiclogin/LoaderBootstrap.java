@@ -10,6 +10,7 @@ import cn.mythicland.mythiclogin.listener.StartupGateListener;
 import cn.mythicland.mythiclogin.manager.ConfigManager;
 import cn.mythicland.mythiclogin.manager.DataManager;
 import cn.mythicland.mythiclogin.service.AuthService;
+import cn.mythicland.mythiclogin.service.PremiumBridge;
 import cn.mythicland.mythiclogin.service.EmailAuthService;
 import cn.mythicland.mythiclogin.service.MessageService;
 import cn.mythicland.mythiclogin.service.StartupGateService;
@@ -116,6 +117,7 @@ final class LoaderBootstrap {
     }
 
     void finishStartup() {
+        components.resolve(PremiumBridge.class).register();
         protocolGatekeeper.register();
         authService.start();
         startupGateService.markReady();
@@ -131,6 +133,7 @@ final class LoaderBootstrap {
 
     void beginShutdown() {
         startupGateService.markStarting();
+        components.resolve(PremiumBridge.class).unregister();
         protocolGatekeeper.unregister();
         emailAuthService.clear();
     }

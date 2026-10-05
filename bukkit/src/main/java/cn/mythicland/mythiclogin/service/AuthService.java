@@ -1,6 +1,7 @@
 package cn.mythicland.mythiclogin.service;
 
 import cn.mythicland.framework.component.InjectComponent;
+import cn.mythicland.mythiclogin.common.premium.PremiumMessage;
 import cn.mythicland.mythiclogin.domain.account.AccountRepository;
 import cn.mythicland.mythiclogin.domain.account.Account;
 import cn.mythicland.mythiclogin.config.key.MessageKey;
@@ -32,6 +33,7 @@ public final class AuthService {
     private final AuthSessionManager authSessionManager;
     private final RestrictionService restrictionService;
     private final AccountNotificationService accountNotificationService;
+    private final PremiumBridge premiumBridge;
     private BukkitTask displayTask;
 
     public AuthService(
@@ -44,7 +46,8 @@ public final class AuthService {
         DisplayService displayService,
         AuthSessionManager authSessionManager,
         RestrictionService restrictionService,
-        AccountNotificationService accountNotificationService
+        AccountNotificationService accountNotificationService,
+        PremiumBridge premiumBridge
     ) {
         this.plugin = plugin;
         this.pluginLogger = pluginLogger;
@@ -56,6 +59,7 @@ public final class AuthService {
         this.authSessionManager = authSessionManager;
         this.restrictionService = restrictionService;
         this.accountNotificationService = accountNotificationService;
+        this.premiumBridge = premiumBridge;
     }
 
     public void start() {
@@ -109,6 +113,10 @@ public final class AuthService {
     public void handleJoin(Player player) {
         authSessionManager.prepareJoinIfAbsent(player);
         restrictionService.applyRestrictedState(player);
+        if (configManager.getSettings().premium().enabled()) {
+            handleProxyJoin(player);
+            return;
+        }
         String playerName = player.getName();
         CompletableFuture
             .supplyAsync(
@@ -127,6 +135,70 @@ public final class AuthService {
                 }
                 applyJoinResult(player, accountOptional);
             }));
+    }
+
+    private void handleProxyJoin(Player player) {
+        AuthSessionManager.SessionContext loading = authSessionManager.getSession(player);
+        premiumBridge.query(player)
+                .thenCompose(response -> CompletableFuture.supplyAsync(
+                        () -> loadProxyJoinResult(player, response),
+                        dataManager.getExecutorService()
+                ))
+                .whenComplete((result, error) -> Bukkit.getScheduler().runTask(plugin, () -> {
+                    if (!player.isOnline() || authSessionManager.getSession(player) != loading) return;
+                    if (error != null) {
+                        player.kickPlayer("§c账号认证失败, 请重新连接。");
+                        return;
+                    }
+                    applyProxyJoinResult(player, result);
+                }));
+    }
+
+    private ProxyJoinResult loadProxyJoinResult(Player player, PremiumMessage response) {
+        Optional<Account> account = getAccountRepository().findByExactPlayerName(player.getName());
+        if (response.type() == PremiumMessage.Type.OFFLINE) {
+            if (response.premiumUuid() != null || account.isPresent() && account.orElseThrow().getPremiumUuid() != null) {
+                throw new IllegalStateException("Premium authentication required");
+            }
+        } else if (response.premiumUuid() == null || account.isEmpty()
+                || !response.premiumUuid().equals(account.orElseThrow().getPremiumUuid())) {
+            throw new IllegalStateException("Premium account mismatch");
+        }
+        return new ProxyJoinResult(response, account.orElse(null));
+    }
+
+    private void applyProxyJoinResult(Player player, ProxyJoinResult result) {
+        if (result.response.type() == PremiumMessage.Type.OFFLINE) {
+            applyJoinResult(player, Optional.ofNullable(result.account));
+            return;
+        }
+        Account account = result.account;
+        Account logged = account.withLoginMeta(address(player), System.currentTimeMillis(), false)
+                .withLoggedState(true);
+        authSessionManager.authenticate(player, logged);
+        restrictionService.clearRestrictedState(player);
+        displayService.clear(player);
+        if (result.response.showTitle()) {
+            switch (result.response.type()) {
+                case NEW_ACCOUNT -> displayService.showSuccessTitle(player, AuthState.UNREGISTERED);
+                case BOUND -> displayService.showPremiumBoundTitle(player);
+                case AUTO_LOGIN -> displayService.showAutoLoginTitle(player);
+                default -> throw new IllegalStateException("Unexpected premium login result");
+            }
+        }
+        updateLoginMetaAsync(logged.getUsername(), logged.getIp(), logged.getLastLogin(), false);
+        updateLoggedStateAsync(logged.getUsername(), true);
+    }
+
+    public void bindPremium(Player player) {
+        premiumBridge.bind(player);
+    }
+
+    public void unbindPremium(Player player) {
+        premiumBridge.unbind(player);
+    }
+
+    private record ProxyJoinResult(PremiumMessage response, Account account) {
     }
 
     private void applyJoinResult(Player player, Optional<Account> accountOptional) {
@@ -171,6 +243,7 @@ public final class AuthService {
     }
 
     public void handleQuit(Player player) {
+        premiumBridge.clear(player);
         AuthSessionManager.SessionContext context = authSessionManager.remove(player);
         restrictionService.clearRestrictedState(player);
         displayService.clear(player);

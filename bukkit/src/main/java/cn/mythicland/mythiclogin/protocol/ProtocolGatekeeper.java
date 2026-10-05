@@ -82,6 +82,18 @@ public final class ProtocolGatekeeper {
 
     private void handle(PacketEvent event) {
         Player player = event.getPlayer();
+        if (event.getPacketType() == PacketType.Play.Client.CHAT || event.getPacketType() == PacketType.Play.Client.TAB_COMPLETE) {
+            String input = event.getPacket().getStrings().read(0);
+            if (input != null && playerCommandService.isPremiumCommand(input)) {
+                event.setCancelled(true);
+                if (event.getPacketType() == PacketType.Play.Client.CHAT) {
+                    Bukkit.getScheduler().runTask(plugin, () -> {
+                        if (player.isOnline()) playerCommandService.handle(player, input);
+                    });
+                }
+                return;
+            }
+        }
         if (!authSessionManager.shouldRestrict(player)) {
             return;
         }

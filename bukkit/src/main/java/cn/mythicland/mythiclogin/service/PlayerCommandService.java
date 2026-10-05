@@ -1,6 +1,7 @@
 package cn.mythicland.mythiclogin.service;
 
 import cn.mythicland.framework.component.InjectComponent;
+import cn.mythicland.framework.command.CommandLabels;
 import cn.mythicland.mythiclogin.config.key.MessageKey;
 import cn.mythicland.mythiclogin.util.CommandHelpTheme;
 import org.bukkit.command.CommandSender;
@@ -34,7 +35,8 @@ public final class PlayerCommandService {
         if (command == null) {
             return false;
         }
-        return isLoginCommand(command.label())
+        return isPremiumCommand(command.label())
+            || isLoginCommand(command.label())
             || isRegisterCommand(command.label())
             || isChangePasswordCommand(command.label())
             || isLogoutCommand(command.label())
@@ -51,6 +53,17 @@ public final class PlayerCommandService {
 
         String[] parts = command.parts();
         String label = command.label();
+        if (CommandLabels.matches(label, "unpremium")) {
+            if (parts.length != 2) player.sendMessage("§c用法: /unpremium <新密码>");
+            else unpremium(player);
+            return true;
+        }
+        if (isPremiumCommand(label)) {
+            if (parts.length != 2) player.sendMessage("§c用法: /premium <原密码>");
+            else premium(player);
+            return true;
+        }
+
         if (isLoginCommand(label)) {
             if (parts.length != 2) {
                 player.sendMessage(authService.authCommandHint(player));
@@ -136,6 +149,18 @@ public final class PlayerCommandService {
 
     public void sendPasswordResetHint(Player player) {
         player.sendMessage(messageService.get(MessageKey.EMAIL_RESET_USAGE));
+    }
+
+    public boolean isPremiumCommand(String message) {
+        return CommandLabels.matches(message, "premium") || CommandLabels.matches(message, "unpremium");
+    }
+
+    public void unpremium(Player player) {
+        authService.unbindPremium(player);
+    }
+
+    public void premium(Player player) {
+        authService.bindPremium(player);
     }
 
     public void login(Player player, String password) {

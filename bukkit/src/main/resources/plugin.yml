@@ -12,6 +12,8 @@ commands:
     aliases: [reg]
   login:
     aliases: [l]
+  premium:
+  unpremium:
   logout:
   changepassword:
     aliases: [changepass, cp]

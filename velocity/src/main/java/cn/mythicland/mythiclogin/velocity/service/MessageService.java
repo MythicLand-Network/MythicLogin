@@ -21,6 +21,6 @@ public final class MessageService {
     }
 
     public static Component deserialize(String message) {
-        return LEGACY_SERIALIZER.deserialize(message);
+        return LEGACY_SERIALIZER.deserialize(TextUtil.color(message));
     }
 }

@@ -1,5 +1,7 @@
 package cn.mythicland.mythiclogin.config;
 
+import cn.mythicland.framework.security.SignedPayload;
+import cn.mythicland.mythiclogin.common.premium.PremiumSettings;
 import cn.mythicland.mythiclogin.config.model.DisplaySettings;
 import cn.mythicland.mythiclogin.config.model.PluginSettings;
 import cn.mythicland.mythiclogin.config.model.RestrictionSettings;
@@ -27,6 +29,10 @@ public final class MainConfig extends AbstractYamlConfiguration {
 
     public void reload() {
         reloadYamlConfiguration();
+        if (getYamlConfiguration().getString("premium.shared-secret", "").isBlank()) {
+            getYamlConfiguration().set("premium.shared-secret", SignedPayload.generateSecret());
+            saveYamlConfiguration();
+        }
         settings = parse(getYamlConfiguration(), dataDirectory);
     }
 
@@ -70,7 +76,8 @@ public final class MainConfig extends AbstractYamlConfiguration {
                         config.getInt("security.max-password-length", 26),
                         true
                 ),
-                DisplaySettings.defaults()
+                DisplaySettings.defaults(),
+                new PremiumSettings(config.getBoolean("premium.enabled", false), config.getString("premium.shared-secret", ""))
         );
     }
 

@@ -1,12 +1,14 @@
 package cn.mythicland.mythiclogin.velocity.config;
 
 import org.yaml.snakeyaml.LoaderOptions;
+import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.SafeConstructor;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
+import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -86,6 +88,35 @@ public abstract class AbstractYamlConfiguration {
         loadYamlConfiguration();
     }
 
+    @SuppressWarnings("unchecked")
+    protected final void saveString(String path, String value) {
+        String[] segments = path.split("\\.");
+        Map<String, Object> section = configuration;
+        for (int index = 0; index < segments.length - 1; index++) {
+            Object child = section.get(segments[index]);
+            if (child == null) {
+                Map<String, Object> created = new LinkedHashMap<>();
+                section.put(segments[index], created);
+                section = created;
+            } else if (child instanceof Map<?, ?>) {
+                section = (Map<String, Object>) child;
+            } else {
+                throw new IllegalArgumentException("Invalid configuration section for " + path);
+            }
+        }
+        section.put(segments[segments.length - 1], value);
+        try (Writer writer = Files.newBufferedWriter(file, StandardCharsets.UTF_8)) {
+            DumperOptions options = new DumperOptions();
+            options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
+            options.setIndent(2);
+            options.setIndicatorIndent(2);
+            options.setIndentWithIndicator(true);
+            new Yaml(options).dump(configuration, writer);
+        } catch (IOException exception) {
+            throw new IllegalStateException("Failed to save " + file.getFileName(), exception);
+        }
+    }
+
     public String getString(String path, String defaultValue) {
         Object value = getValue(path);
         return value == null ? defaultValue : String.valueOf(value);
@@ -150,7 +181,7 @@ public abstract class AbstractYamlConfiguration {
     @SuppressWarnings("unchecked")
     private Map<String, Object> castMap(Object loaded) {
         if (!(loaded instanceof Map<?, ?>)) {
-            return Collections.emptyMap();
+            return new LinkedHashMap<>();
         }
         Map<String, Object> result = new LinkedHashMap<>();
         for (Map.Entry<?, ?> entry : ((Map<?, ?>) loaded).entrySet()) {

@@ -82,10 +82,10 @@ class ResendEmailGatewayTest {
         assertTrue(capturedEmail.get().getText().contains("123456"));
         assertTrue(capturedEmail.get().getText().contains("密码重置"));
         assertTrue(capturedEmail.get().getText().contains("5 分钟"));
-        assertTrue(capturedEmail.get().getText().contains("如非本人操作，请忽略此邮件"));
+        assertTrue(capturedEmail.get().getText().contains("如非本人操作, 请忽略此邮件"));
         assertTrue(capturedEmail.get().getHtml().contains("123456"));
         assertTrue(capturedEmail.get().getHtml().contains("密码重置"));
-        assertTrue(capturedEmail.get().getHtml().contains("此邮件由系统自动发送，请勿回复"));
+        assertTrue(capturedEmail.get().getHtml().contains("此邮件由系统自动发送, 请勿回复"));
         assertEquals("mythiclogin/reset/1", capturedRequest.get().getIdempotencyKey());
     }
 }

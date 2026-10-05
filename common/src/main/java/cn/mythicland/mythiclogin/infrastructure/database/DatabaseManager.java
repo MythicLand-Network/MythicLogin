@@ -52,7 +52,7 @@ public final class DatabaseManager {
                 .sqliteFile(settings.sqliteFile())
                 .credentials(settings.username(), settings.password())
                 .maximumPoolSize(settings.maximumPoolSize())
-                .minimumIdle(settings.maximumPoolSize())
+                .minimumIdle(1)
                 .poolName(this.poolName)
                 .migrationLocations(List.of("classpath:db/" + settings.mode().name().toLowerCase()))
                 .placeholders(Map.of("table", settings.table()))

@@ -24,3 +24,6 @@ restrictions:
     - /register
     - /fp
     - /forgotpassword
+premium:
+  enabled: false
+  shared-secret: ""

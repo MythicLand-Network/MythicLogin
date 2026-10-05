@@ -39,6 +39,28 @@ public final class AuthCommands extends AbstractCommand {
         this.commandService.login(player, context.argument(0));
     }
 
+    @CommandRoute(path = {"premium"}, usages = "/premium <原密码>", maxArguments = Integer.MAX_VALUE)
+    private void premium(CommandContext context) {
+        Player player = requirePlayer(context);
+        if (player == null) return;
+        if (context.argumentCount() != 1) {
+            player.sendMessage("§c用法: /premium <原密码>");
+            return;
+        }
+        commandService.premium(player);
+    }
+
+    @CommandRoute(path = {"unpremium"}, usages = "/unpremium <新密码>", maxArguments = Integer.MAX_VALUE)
+    private void unpremium(CommandContext context) {
+        Player player = requirePlayer(context);
+        if (player == null) return;
+        if (context.argumentCount() != 1) {
+            player.sendMessage("§c用法: /unpremium <新密码>");
+            return;
+        }
+        commandService.unpremium(player);
+    }
+
     @CommandRoute(path = {"logout"}, usages = "/logout", maxArguments = Integer.MAX_VALUE)
     private void logout(CommandContext context) {
         Player player = this.requirePlayer(context);

@@ -28,6 +28,7 @@ public final class PluginLoader {
     }
 
     public static void onDisable() {
+        if (bootstrap != null) bootstrap.shutdown(instance);
         if (dataManager != null) {
             dataManager.shutdown();
         }

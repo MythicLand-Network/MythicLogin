@@ -35,3 +35,6 @@ restrictions:
       - /velocity
       - /shutdown
       - /reload
+premium:
+  enabled: false
+  shared-secret: ""
