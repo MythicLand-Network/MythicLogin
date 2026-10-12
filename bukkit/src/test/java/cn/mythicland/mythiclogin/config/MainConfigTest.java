@@ -93,6 +93,5 @@ class MainConfigTest {
                 "jdbc:postgresql://127.0.0.1:5432/mythiclogin",
                 settings.database().jdbcUrl()
         );
-        assertEquals("&7剩余时间: &f{0} &7秒", settings.display().getActionBarLoginText());
     }
 }

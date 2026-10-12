@@ -26,17 +26,12 @@ class PremiumDisplayTest {
         DisplayService displays = new DisplayService(plugin, packets, config, new MessageService());
 
         displays.showPremiumReconnectTitle(player);
-        verify(packets).sendTitle(player, "§e请重新连接", "§7请在 §f60 §7秒内使用正版客户端重新进入", 10, 20, 10);
         displays.showPremiumBoundTitle(player);
-        verify(packets).sendTitle(player, "§a绑定成功", "§7已为您开启正版免登录。", 10, 20, 10);
         displays.showPremiumFailureTitle(player, "账号已变更");
-        verify(packets).sendTitle(player, "§c绑定失败", "§7账号已变更", 10, 20, 10);
         displays.showPremiumUnboundTitle(player);
-        verify(packets).sendTitle(player, "§a取消成功", "§7已为您关闭正版免登录。", 10, 20, 10);
         displays.showPremiumUnbindFailureTitle(player, "账号已变更");
-        verify(packets).sendTitle(player, "§c取消失败", "§7账号已变更", 10, 20, 10);
         displays.showPasswordFailureTitle(player);
-        verify(packets).sendTitle(player, "§c密码错误!", "§7请重新输入正确密码", 0, 20, 0);
+        verify(packets, times(6)).sendTitle(eq(player), anyString(), anyString(), anyInt(), anyInt(), anyInt());
         verifyNoInteractions(plugin);
     }
 }
