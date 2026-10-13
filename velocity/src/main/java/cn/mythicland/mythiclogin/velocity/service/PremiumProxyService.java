@@ -85,7 +85,6 @@ public final class PremiumProxyService {
                 if (account != null && !account.getRealName().equals(name)) {
                     throw new IllegalStateException("请使用账号原有的名字大小写。");
                 }
-                attempt.account = account;
                 Binding binding = bindings.remove(key);
                 if (binding != null && binding.expiresAt > System.currentTimeMillis()) {
                     if (!sameAccount(account, binding.account)) throw new IllegalStateException("账号已变更, 请重新申请绑定。");
@@ -93,9 +92,6 @@ public final class PremiumProxyService {
                     attempt.expectedUuid = binding.uuid;
                 } else if (account != null) {
                     attempt.expectedUuid = account.getPremiumUuid();
-                } else {
-                    Optional<MinecraftProfiles.Profile> profile = profiles.findByName(name);
-                    if (profile.isPresent()) attempt.expectedUuid = profile.orElseThrow().uuid();
                 }
                 event.setResult(attempt.expectedUuid == null
                         ? PreLoginEvent.PreLoginComponentResult.forceOfflineMode()
@@ -140,13 +136,6 @@ public final class PremiumProxyService {
                             throw new IllegalStateException("Binding expired or account changed");
                         }
                         type = PremiumMessage.Type.BOUND;
-                    } else if (attempt.account == null) {
-                        if (current != null) throw new IllegalStateException("Account name occupied");
-                        long now = System.currentTimeMillis();
-                        String ip = player.getRemoteAddress().getAddress().getHostAddress();
-                        Account created = Account.premium(attempt.name, attempt.verifiedUuid, ip, now);
-                        if (!repository.create(created)) throw new IllegalStateException("Account name occupied");
-                        type = PremiumMessage.Type.NEW_ACCOUNT;
                     } else {
                         if (current == null || !attempt.verifiedUuid.equals(current.getPremiumUuid())) {
                             throw new IllegalStateException("Premium account changed");
@@ -376,7 +365,6 @@ public final class PremiumProxyService {
         private final InboundConnection connection;
         private final String name;
         private final long startedAt = System.currentTimeMillis();
-        private Account account;
         private Binding binding;
         private UUID expectedUuid;
         private UUID verifiedUuid;

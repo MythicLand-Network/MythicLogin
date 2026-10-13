@@ -9,6 +9,7 @@ import com.resend.services.emails.model.CreateEmailOptions;
 
 public final class ResendEmailGateway implements EmailGateway {
     private static final String BIND_SUBJECT = "【MythicLand Network】邮箱绑定验证码";
+    private static final String CHANGE_SUBJECT = "【MythicLand Network】邮箱更换验证码";
     private static final String RESET_SUBJECT = "【MythicLand Network】密码重置验证码";
     private static final String PASSWORD_CHANGED_SUBJECT = "【MythicLand Network】密码修改通知";
     private static final String EMAIL_CHANGED_SUBJECT = "【MythicLand Network】邮箱更换通知";
@@ -67,7 +68,11 @@ public final class ResendEmailGateway implements EmailGateway {
     }
 
     private String subject(VerificationPurpose purpose) {
-        return purpose == VerificationPurpose.BIND_EMAIL ? BIND_SUBJECT : RESET_SUBJECT;
+        return switch (purpose) {
+            case BIND_EMAIL -> BIND_SUBJECT;
+            case CHANGE_EMAIL -> CHANGE_SUBJECT;
+            case RESET_PASSWORD -> RESET_SUBJECT;
+        };
     }
 
     private String text(VerificationEmail email) {
@@ -99,7 +104,11 @@ public final class ResendEmailGateway implements EmailGateway {
     }
 
     private String operationName(VerificationPurpose purpose) {
-        return purpose == VerificationPurpose.BIND_EMAIL ? "邮箱绑定" : "密码重置";
+        return switch (purpose) {
+            case BIND_EMAIL -> "邮箱绑定";
+            case CHANGE_EMAIL -> "邮箱更换";
+            case RESET_PASSWORD -> "密码重置";
+        };
     }
 
     private String notificationSubject(AccountNotificationType type) {

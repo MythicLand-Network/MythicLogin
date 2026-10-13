@@ -23,6 +23,8 @@ import com.velocitypowered.api.proxy.ServerConnection;
 import com.velocitypowered.api.util.GameProfile;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 
 import java.net.InetSocketAddress;
@@ -81,30 +83,26 @@ class PremiumProxyServiceTest {
 
     @Test
     void newOfflineNameCanContinueToRegistrationWithoutCreatingPremiumAccount() {
-        when(profiles.findByName(NAME)).thenReturn(Optional.empty());
-
         assertTrue(preLogin().getResult().isForceOfflineMode());
         assertTrue(finish(false, MinecraftProfiles.offlineUuid(NAME)).getResult().isAllowed());
         assertFalse(service.isAuthenticated(player));
         assertEquals(PremiumMessage.Type.OFFLINE, query(UUID.randomUUID()).type());
         verify(repository, never()).create(any());
         verify(repository, never()).bindPremium(any(), any());
+        verifyNoInteractions(profiles);
     }
 
     @Test
-    void newPremiumIdentityIsVerifiedWhileGameUuidRemainsOffline() {
-        when(profiles.findByName(NAME)).thenReturn(Optional.of(new MinecraftProfiles.Profile(officialUuid, NAME)));
-        when(repository.create(any())).thenReturn(true);
+    void boundPremiumIdentityIsVerifiedWhileGameUuidRemainsOffline() {
+        when(repository.findByPlayerNameIgnoreCase(NAME)).thenReturn(Optional.of(account().withPremiumUuid(officialUuid)));
         assertTrue(preLogin().getResult().isOnlineModeAllowed());
         LoginEvent login = finish(true, officialUuid);
         assertTrue(login.getResult().isAllowed());
         assertTrue(service.isAuthenticated(player));
-        ArgumentCaptor<Account> created = ArgumentCaptor.forClass(Account.class);
-        verify(repository).create(created.capture());
-        assertEquals(officialUuid, created.getValue().getPremiumUuid());
-        assertFalse(new PasswordHashes().verify("password", created.getValue().getPassword()));
+        verify(repository, never()).create(any());
+        verifyNoInteractions(profiles);
         PremiumMessage first = query(UUID.randomUUID());
-        assertEquals(PremiumMessage.Type.NEW_ACCOUNT, first.type());
+        assertEquals(PremiumMessage.Type.AUTO_LOGIN, first.type());
         assertTrue(first.showTitle());
         assertFalse(query(UUID.randomUUID()).showTitle());
     }
@@ -120,8 +118,8 @@ class PremiumProxyServiceTest {
     }
 
     @Test
-    void refusesNameOccupiedDuringPremiumHandshake() {
-        when(profiles.findByName(NAME)).thenReturn(Optional.of(new MinecraftProfiles.Profile(officialUuid, NAME)));
+    void refusesPremiumBindingChangedDuringHandshake() {
+        when(repository.findByPlayerNameIgnoreCase(NAME)).thenReturn(Optional.of(account().withPremiumUuid(officialUuid)));
         preLogin();
         when(repository.findByPlayerNameIgnoreCase(NAME)).thenReturn(Optional.of(account()));
         assertFalse(finish(true, officialUuid).getResult().isAllowed());
@@ -129,10 +127,19 @@ class PremiumProxyServiceTest {
         verify(repository, never()).bindPremium(any(), any());
     }
 
-    @Test
-    void profileServiceFailureDoesNotFallBackToOfflineLogin() {
-        when(profiles.findByName(NAME)).thenThrow(new IllegalStateException("Unavailable"));
-        assertFalse(preLogin().getResult().isAllowed());
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void newPlayerAlwaysUsesOfflineModeRegardlessOfOfficialProfile(boolean profileUnavailable) {
+        if (profileUnavailable) {
+            when(profiles.findByName(NAME)).thenThrow(new IllegalStateException("Unavailable"));
+        } else {
+            when(profiles.findByName(NAME)).thenReturn(Optional.of(new MinecraftProfiles.Profile(officialUuid, NAME)));
+        }
+        assertTrue(preLogin().getResult().isForceOfflineMode());
+        assertTrue(finish(false, MinecraftProfiles.offlineUuid(NAME)).getResult().isAllowed());
+        assertFalse(service.isAuthenticated(player));
+        verifyNoInteractions(profiles);
+        verify(repository, never()).create(any());
     }
 
     @Test
@@ -240,8 +247,9 @@ class PremiumProxyServiceTest {
         )));
     }
 
-    @Test
-    void bindingRequiresPasswordProofThenOnlineHandshakeAndUnchangedAccount() {
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void bindingRequiresPasswordProofThenOnlineHandshakeAndUnchangedAccount(boolean accountUnchanged) {
         Account offline = account();
         when(repository.findByPlayerNameIgnoreCase(NAME)).thenReturn(Optional.of(offline));
         when(repository.findByExactPlayerName(NAME)).thenReturn(Optional.of(offline));
@@ -269,11 +277,16 @@ class PremiumProxyServiceTest {
         GameProfileRequestEvent profile = new GameProfileRequestEvent(reconnect, new GameProfile(officialUuid, NAME, List.of()), true);
         service.onProfile(profile);
         when(player.isOnlineMode()).thenReturn(true);
-        when(repository.bindPremium(offline, officialUuid)).thenReturn(false);
+        when(repository.bindPremium(offline, officialUuid)).thenReturn(accountUnchanged);
         LoginEvent login = new LoginEvent(player);
         run(service.onLogin(login));
-        assertFalse(login.getResult().isAllowed());
+        assertEquals(accountUnchanged, login.getResult().isAllowed());
         verify(repository).bindPremium(offline, officialUuid);
+        verify(profiles).findByName(NAME);
+        if (accountUnchanged) {
+            assertTrue(service.isAuthenticated(player));
+            assertEquals(PremiumMessage.Type.BOUND, query(UUID.randomUUID()).type());
+        }
     }
 
     private Account account() {

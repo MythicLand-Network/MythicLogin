@@ -1,14 +1,13 @@
 package cn.mythicland.mythiclogin.config;
 
-import org.bukkit.plugin.Plugin;
+import org.bukkit.plugin.java.JavaPlugin;
 
 public abstract class AbstractYamlConfiguration
-        extends cn.mythicland.framework.bukkit.config.AbstractYamlConfiguration {
+        extends cn.mythicland.framework.bukkit.config.AbstractYamlConfig {
     protected AbstractYamlConfiguration(
-            Plugin plugin,
-            String fileName,
-            String... legacyFileNames
+            JavaPlugin plugin,
+            String fileName
     ) {
-        super(plugin, fileName, legacyFileNames);
+        super(plugin, fileName);
     }
 }

@@ -2,6 +2,7 @@ package cn.mythicland.mythiclogin.service;
 
 import cn.mythicland.mythiclogin.common.premium.PremiumMessage;
 import cn.mythicland.mythiclogin.common.premium.PremiumSettings;
+import cn.mythicland.mythiclogin.config.key.MessageKey;
 import cn.mythicland.mythiclogin.config.model.DisplaySettings;
 import cn.mythicland.mythiclogin.config.model.PluginSettings;
 import cn.mythicland.mythiclogin.config.model.RestrictionSettings;
@@ -29,6 +30,23 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 class PremiumJoinTest {
+    @Test
+    void newOfflinePlayerCanEnterRegistrationWithoutPremiumAccount() {
+        Fixture fixture = new Fixture();
+        when(fixture.repository.findByExactPlayerName("Tester")).thenReturn(Optional.empty());
+        PremiumMessage offline = new PremiumMessage(PremiumMessage.Type.OFFLINE, UUID.randomUUID(), "Tester",
+                fixture.player.getUniqueId(), null, false, 0, "");
+        when(fixture.bridge.query(fixture.player)).thenReturn(CompletableFuture.completedFuture(offline));
+        try (MockedStatic<Bukkit> bukkit = fixture.scheduler()) {
+            fixture.auth.handleJoin(fixture.player);
+            assertEquals(AuthState.UNREGISTERED, fixture.sessions.getSession(fixture.player).getState());
+            assertFalse(fixture.sessions.isAuthenticated(fixture.player));
+            verify(fixture.messages).send(fixture.player, MessageKey.AUTH_REGISTER_REQUIRED);
+            verify(fixture.player, never()).kickPlayer(anyString());
+            verifyNoInteractions(fixture.displays);
+        }
+    }
+
     @Test
     void waitsForTrustedIdentityAndShowsOnlyBindingSuccess() {
         Fixture fixture = new Fixture();
@@ -83,6 +101,7 @@ class PremiumJoinTest {
         private final DisplayService displays = mock(DisplayService.class);
         private final MessageService messages = mock(MessageService.class);
         private final AuthSessionManager sessions = new AuthSessionManager();
+        private final AccountRepository repository = mock(AccountRepository.class);
         private final AuthService auth;
 
         private Fixture() {
@@ -94,7 +113,6 @@ class PremiumJoinTest {
             when(config.getSettings()).thenReturn(new PluginSettings(null, new SessionSettings(false, 5), restrictions,
                     DisplaySettings.defaults(), new PremiumSettings(true, "abcdefghijklmnopqrstuvwxyz0123456789")));
             DataManager data = mock(DataManager.class);
-            AccountRepository repository = mock(AccountRepository.class);
             when(data.getAccountRepository()).thenReturn(repository);
             when(repository.findByExactPlayerName("Tester")).thenReturn(Optional.of(
                     new Account("tester", "Tester", "!", null, 0, 1, null, false, false).withPremiumUuid(premiumUuid)));

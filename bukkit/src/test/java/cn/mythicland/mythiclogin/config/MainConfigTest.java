@@ -2,7 +2,7 @@ package cn.mythicland.mythiclogin.config;
 
 import cn.mythicland.mythiclogin.config.model.PluginSettings;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.plugin.Plugin;
+import org.bukkit.plugin.java.JavaPlugin;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -24,8 +24,11 @@ class MainConfigTest {
             Path directory = Files.createDirectory(tempDir.resolve("config-" + index));
             Path file = directory.resolve("config.yml");
             if (configurations[index] != null) Files.writeString(file, configurations[index]);
-            Plugin plugin = mock(Plugin.class);
+            JavaPlugin plugin = mock(JavaPlugin.class);
             when(plugin.getDataFolder()).thenReturn(directory.toFile());
+            when(plugin.getResource("config.yml")).thenAnswer(
+                    invocation -> MainConfigTest.class.getClassLoader().getResourceAsStream("config.yml")
+            );
             doAnswer(invocation -> {
                 try (var resource = MainConfigTest.class.getClassLoader().getResourceAsStream("config.yml")) {
                     Files.copy(resource, file);
@@ -39,7 +42,7 @@ class MainConfigTest {
             assertEquals(secret, YamlConfiguration.loadConfiguration(file.toFile()).getString("premium.shared-secret"));
             config.reload();
             assertEquals(secret, config.getSettings().premium().sharedSecret());
-            if (index == 1) assertEquals(45, config.getYamlConfiguration().getInt("security.auth-timeout-seconds"));
+            if (index == 1) assertEquals(45, config.getSettings().restrictions().getAuthTimeoutSeconds());
         }
     }
 
@@ -47,8 +50,11 @@ class MainConfigTest {
     void shouldPreserveConfiguredSecret(@TempDir Path tempDir) throws Exception {
         String secret = "abcdefghijklmnopqrstuvwxyz0123456789";
         Files.writeString(tempDir.resolve("config.yml"), "premium:\n  enabled: true\n  shared-secret: " + secret + "\n");
-        Plugin plugin = mock(Plugin.class);
+        JavaPlugin plugin = mock(JavaPlugin.class);
         when(plugin.getDataFolder()).thenReturn(tempDir.toFile());
+        when(plugin.getResource("config.yml")).thenAnswer(
+                invocation -> MainConfigTest.class.getClassLoader().getResourceAsStream("config.yml")
+        );
         assertEquals(secret, new MainConfig(plugin).getSettings().premium().sharedSecret());
     }
 

@@ -104,16 +104,17 @@ public final class JdbcAccountRepository implements AccountRepository {
     }
 
     @Override
-    public boolean updateEmailIfAvailable(String username, String email) {
-        String sql = "UPDATE " + this.table() + " SET email = ? WHERE username = ? AND NOT EXISTS "
+    public boolean updateEmailIfAvailable(String username, String expectedEmail, String email) {
+        String sql = "UPDATE " + this.table() + " SET email = ? WHERE username = ? AND COALESCE(email, '') = ? AND NOT EXISTS "
                 + "(SELECT 1 FROM " + this.table() + " WHERE LOWER(email) = ? AND username <> ?)";
         try (Connection connection = this.databaseManager.dataSource().getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             String normalizedUsername = normalize(username);
             statement.setString(1, normalize(email));
             statement.setString(2, normalizedUsername);
-            statement.setString(3, normalize(email));
-            statement.setString(4, normalizedUsername);
+            statement.setString(3, expectedEmail == null ? "" : expectedEmail);
+            statement.setString(4, normalize(email));
+            statement.setString(5, normalizedUsername);
             return statement.executeUpdate() > 0;
         } catch (SQLException exception) {
             if (isConstraintViolation(exception)) return false;

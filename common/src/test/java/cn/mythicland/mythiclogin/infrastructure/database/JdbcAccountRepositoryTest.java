@@ -57,7 +57,7 @@ class JdbcAccountRepositoryTest {
         assertFalse(stored.isLogged());
         assertTrue(repository.updatePassword("tester", "new-hash"));
         assertEquals("new-hash", repository.findByExactPlayerName("Tester").orElseThrow().getPassword());
-        assertTrue(repository.updateEmailIfAvailable("tester", "Tester@Example.com"));
+        assertTrue(repository.updateEmailIfAvailable("tester", null, "Tester@Example.com"));
         assertEquals("tester@example.com", repository.findByExactPlayerName("Tester").orElseThrow().getEmail());
         assertEquals("Tester", repository.findByEmailIgnoreCase("TESTER@example.com").orElseThrow().getRealName());
         assertTrue(repository.updateLoggedState("tester", true));
@@ -84,9 +84,25 @@ class JdbcAccountRepositoryTest {
 
         assertTrue(repository.create(first));
         assertTrue(repository.create(second));
-        assertTrue(repository.updateEmailIfAvailable("first", "shared@example.com"));
-        assertFalse(repository.updateEmailIfAvailable("second", "SHARED@example.com"));
+        assertTrue(repository.updateEmailIfAvailable("first", null, "shared@example.com"));
+        assertFalse(repository.updateEmailIfAvailable("second", null, "SHARED@example.com"));
         assertNull(repository.findByExactPlayerName("Second").orElseThrow().getEmail());
+    }
+
+    @Test
+    void shouldUpdateEmailOnlyWhileTheVerifiedOldEmailIsUnchanged() {
+        DatabaseSettings settings = DatabaseSettings.sqlite(temporaryDirectory.resolve("accounts.db"), "accounts");
+        databaseManager = new DatabaseManager(Logger.getLogger("test"), settings, "MythicLoginTest");
+        JdbcAccountRepository repository = new JdbcAccountRepository(databaseManager, () -> settings);
+        Account account = new Account("tester", "Tester", "hash", null, 0L, 0L, null, false, false);
+        assertTrue(repository.create(account));
+        assertTrue(repository.updateEmailIfAvailable("tester", null, "old@example.com"));
+        assertFalse(repository.updateEmailIfAvailable("tester", null, "attacker@example.com"));
+        assertFalse(repository.updateEmailIfAvailable("tester", "different@example.com", "attacker@example.com"));
+        assertEquals("old@example.com", repository.findByExactPlayerName("Tester").orElseThrow().getEmail());
+        assertTrue(repository.updateEmailIfAvailable("tester", "old@example.com", "new@example.com"));
+        assertFalse(repository.updateEmailIfAvailable("tester", "old@example.com", "attacker@example.com"));
+        assertEquals("new@example.com", repository.findByExactPlayerName("Tester").orElseThrow().getEmail());
     }
 
     @Test

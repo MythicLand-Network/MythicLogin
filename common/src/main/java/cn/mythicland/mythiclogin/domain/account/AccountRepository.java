@@ -21,7 +21,7 @@ public interface AccountRepository {
 
     boolean resetPassword(String username, String passwordHash);
 
-    boolean updateEmailIfAvailable(String username, String email);
+    boolean updateEmailIfAvailable(String username, String expectedEmail, String email);
 
     boolean updateLoginMeta(String username, String ip, long lastLogin, boolean hasSession);
 

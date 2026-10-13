@@ -8,8 +8,8 @@ import cn.mythicland.mythiclogin.config.model.RestrictionSettings;
 import cn.mythicland.mythiclogin.domain.session.SessionSettings;
 import cn.mythicland.mythiclogin.infrastructure.database.DatabaseMode;
 import cn.mythicland.mythiclogin.infrastructure.database.DatabaseSettings;
-import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.plugin.Plugin;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.plugin.java.JavaPlugin;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -21,26 +21,30 @@ public final class MainConfig extends AbstractYamlConfiguration {
     private final Path dataDirectory;
     private PluginSettings settings;
 
-    public MainConfig(Plugin plugin) {
+    public MainConfig(JavaPlugin plugin) {
         super(plugin, "config.yml");
         this.dataDirectory = plugin.getDataFolder().toPath();
         reload();
     }
 
     public void reload() {
-        reloadYamlConfiguration();
-        if (getYamlConfiguration().getString("premium.shared-secret", "").isBlank()) {
-            getYamlConfiguration().set("premium.shared-secret", SignedPayload.generateSecret());
-            saveYamlConfiguration();
+        load();
+    }
+
+    @Override
+    protected void checkConfig() {
+        if (configuration().getString("premium.shared-secret", "").isBlank()) {
+            configuration().set("premium.shared-secret", SignedPayload.generateSecret());
+            markChanged();
         }
-        settings = parse(getYamlConfiguration(), dataDirectory);
+        settings = parse(configuration(), dataDirectory);
     }
 
     public PluginSettings getSettings() {
         return settings;
     }
 
-    static PluginSettings parse(YamlConfiguration config, Path dataDirectory) {
+    static PluginSettings parse(FileConfiguration config, Path dataDirectory) {
         DatabaseMode databaseMode = DatabaseMode.parse(config.getString("database.mode", "sqlite"));
         String table = config.getString("database.table", DatabaseSettings.TABLE_NAME);
         DatabaseSettings databaseSettings = switch (databaseMode) {

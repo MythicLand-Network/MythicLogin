@@ -14,8 +14,10 @@ import cn.mythicland.mythiclogin.model.AuthState;
 import cn.mythicland.mythiclogin.util.PluginLogger;
 import org.bukkit.entity.Player;
 
+import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -39,6 +41,7 @@ public final class EmailAuthService {
     private final AccountNotificationService accountNotificationService;
     private final Consumer<Runnable> mainThreadExecutor;
     private final Map<SendKey, UUID> sending = new ConcurrentHashMap<>();
+    private final Map<UUID, BindingRequest> bindings = new HashMap<>();
 
     public EmailAuthService(
             PluginLogger pluginLogger,
@@ -96,13 +99,9 @@ public final class EmailAuthService {
                 player,
                 VerificationPurpose.RESET_PASSWORD,
                 account.getEmail(),
-                MessageKey.EMAIL_RESET_SENT
-        ).thenApply(result -> {
-            if (result.challenge() != null) {
-                runMainThread(() -> authSessionManager.extendDeadline(player, result.challenge().expiresAtMillis()));
-            }
-            return result.message();
-        });
+                MessageKey.EMAIL_RESET_SENT,
+                challenge -> runMainThread(() -> authSessionManager.extendDeadline(player, challenge.expiresAtMillis()))
+        ).thenApply(SendResult::message);
     }
 
     public CompletableFuture<String> resetPassword(
@@ -162,8 +161,7 @@ public final class EmailAuthService {
     }
 
     public void reload() {
-        verificationCodeService.clear();
-        sending.clear();
+        clear();
         String validationError = configManager.getEmailSettings().validationError();
         if (validationError != null) {
             pluginLogger.warning("Email verification is disabled: " + validationError + ".");
@@ -171,8 +169,11 @@ public final class EmailAuthService {
     }
 
     public void clear() {
-        verificationCodeService.clear();
-        sending.clear();
+        synchronized (bindings) {
+            verificationCodeService.clear();
+            sending.clear();
+            bindings.clear();
+        }
     }
 
     private CompletableFuture<String> sendBindingCode(Player player, Account account, String rawEmail) {
@@ -186,32 +187,72 @@ public final class EmailAuthService {
                 dataManager.getExecutorService()
         ).thenCompose(existing -> {
             if (existing.isPresent()) return completed(MessageKey.EMAIL_ALREADY_IN_USE);
-            return sendChallenge(player, VerificationPurpose.BIND_EMAIL, email, MessageKey.EMAIL_BIND_SENT)
-                    .thenApply(SendResult::message);
+            boolean hasEmail = account.getEmail() != null && !account.getEmail().isBlank();
+            BindingRequest request = new BindingRequest(
+                    account.getEmail(),
+                    email,
+                    hasEmail ? VerificationPurpose.CHANGE_EMAIL : VerificationPurpose.BIND_EMAIL
+            );
+            return sendBindingChallenge(player, request, hasEmail ? MessageKey.EMAIL_CHANGE_SENT : MessageKey.EMAIL_BIND_SENT);
         });
     }
 
+    private CompletableFuture<String> sendBindingChallenge(
+            Player player,
+            BindingRequest request,
+            MessageKey successMessage
+    ) {
+        String recipient = request.purpose() == VerificationPurpose.CHANGE_EMAIL
+                ? request.currentEmail()
+                : request.targetEmail();
+        return sendChallenge(
+                player,
+                request.purpose(),
+                recipient,
+                successMessage,
+                challenge -> bindings.put(player.getUniqueId(), request)
+        ).thenApply(SendResult::message);
+    }
+
     private CompletableFuture<String> completeBinding(Player player, Account account, String code) {
-        VerificationCodeService.VerificationResult verification = verificationCodeService.verify(
-                player.getUniqueId(),
-                VerificationPurpose.BIND_EMAIL,
-                code
-        );
-        String failureMessage = verificationFailure(verification.status());
-        if (failureMessage != null) return CompletableFuture.completedFuture(failureMessage);
+        BindingRequest request;
+        synchronized (bindings) {
+            request = bindings.get(player.getUniqueId());
+            if (request == null) return completed(MessageKey.EMAIL_CODE_MISSING);
+            if (!Objects.equals(request.currentEmail(), account.getEmail())) {
+                bindings.remove(player.getUniqueId());
+                return completed(MessageKey.EMAIL_CODE_EXPIRED);
+            }
+            VerificationCodeService.VerificationResult verification = verificationCodeService.verify(
+                    player.getUniqueId(),
+                    request.purpose(),
+                    code
+            );
+            String failureMessage = verificationFailure(verification.status());
+            if (failureMessage != null) return CompletableFuture.completedFuture(failureMessage);
+            bindings.remove(player.getUniqueId());
+            if (request.purpose() == VerificationPurpose.CHANGE_EMAIL) {
+                return sendBindingChallenge(
+                        player,
+                        new BindingRequest(request.currentEmail(), request.targetEmail(), VerificationPurpose.BIND_EMAIL),
+                        MessageKey.EMAIL_CHANGE_NEW_SENT
+                );
+            }
+        }
 
         return CompletableFuture.supplyAsync(
                 () -> dataManager.getAccountRepository().updateEmailIfAvailable(
                         account.getUsername(),
-                        verification.targetEmail()
+                        request.currentEmail(),
+                        request.targetEmail()
                 ),
                 dataManager.getExecutorService()
         ).thenApply(updated -> {
-            if (!updated) return messageService.get(MessageKey.EMAIL_ALREADY_IN_USE);
+            if (!updated) return messageService.get(MessageKey.EMAIL_BIND_FAILED);
             accountNotificationService.notifyEmailChanged(account);
             runMainThread(() -> authSessionManager.replaceAccount(
                     player,
-                    account.withEmail(verification.targetEmail())
+                    account.withEmail(request.targetEmail())
             ));
             return messageService.get(MessageKey.EMAIL_BIND_SUCCESS);
         });
@@ -221,7 +262,8 @@ public final class EmailAuthService {
             Player player,
             VerificationPurpose purpose,
             String targetEmail,
-            MessageKey successMessage
+            MessageKey successMessage,
+            Consumer<VerificationCodeService.Challenge> onActivated
     ) {
         EmailSettings settings = configManager.getEmailSettings();
         if (!settings.isEnabled()) {
@@ -268,8 +310,11 @@ public final class EmailAuthService {
         return CompletableFuture.supplyAsync(() -> {
             try {
                 emailGateway.send(email);
-                if (!verificationCodeService.activate(challenge)) {
-                    return new SendResult(messageService.get(MessageKey.EMAIL_CODE_EXPIRED), null);
+                synchronized (bindings) {
+                    if (!verificationCodeService.activate(challenge)) {
+                        return new SendResult(messageService.get(MessageKey.EMAIL_CODE_EXPIRED), null);
+                    }
+                    onActivated.accept(challenge);
                 }
                 return new SendResult(messageService.get(successMessage), challenge);
             } catch (EmailDeliveryException exception) {
@@ -321,6 +366,9 @@ public final class EmailAuthService {
     }
 
     private record SendKey(UUID playerId, VerificationPurpose purpose) {
+    }
+
+    private record BindingRequest(String currentEmail, String targetEmail, VerificationPurpose purpose) {
     }
 
     private record SendResult(String message, VerificationCodeService.Challenge challenge) {

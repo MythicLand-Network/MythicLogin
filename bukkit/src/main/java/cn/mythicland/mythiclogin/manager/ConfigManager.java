@@ -4,14 +4,14 @@ import cn.mythicland.mythiclogin.config.EmailConfig;
 import cn.mythicland.mythiclogin.config.MainConfig;
 import cn.mythicland.mythiclogin.config.model.EmailSettings;
 import cn.mythicland.mythiclogin.config.model.PluginSettings;
-import org.bukkit.plugin.Plugin;
+import org.bukkit.plugin.java.JavaPlugin;
 
 public final class ConfigManager {
 
     private final MainConfig mainConfig;
     private final EmailConfig emailConfig;
 
-    public ConfigManager(Plugin plugin) {
+    public ConfigManager(JavaPlugin plugin) {
         this.mainConfig = new MainConfig(plugin);
         this.emailConfig = new EmailConfig(plugin);
     }
