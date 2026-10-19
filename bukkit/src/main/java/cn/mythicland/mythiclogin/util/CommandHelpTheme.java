@@ -1,5 +1,7 @@
 package cn.mythicland.mythiclogin.util;
 
+import cn.mythicland.framework.bukkit.command.CommandFeedback;
+
 import org.bukkit.command.CommandSender;
 
 public final class CommandHelpTheme {
@@ -9,6 +11,6 @@ public final class CommandHelpTheme {
     }
 
     public static void sendUsage(CommandSender sender, String usage) {
-        sender.sendMessage(HELP_PREFIX + usage);
+        CommandFeedback.send(sender, HELP_PREFIX + usage);
     }
 }

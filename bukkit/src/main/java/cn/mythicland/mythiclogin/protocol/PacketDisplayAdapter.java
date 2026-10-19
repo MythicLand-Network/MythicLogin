@@ -1,7 +1,7 @@
 package cn.mythicland.mythiclogin.protocol;
 
 import cn.mythicland.framework.component.InjectComponent;
-import cn.mythicland.mythiclogin.common.util.TextUtil;
+import cn.mythicland.framework.text.TextUtil;
 import cn.mythicland.mythiclogin.util.PluginLogger;
 import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.ProtocolLibrary;

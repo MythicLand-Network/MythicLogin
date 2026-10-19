@@ -1,7 +1,7 @@
 package cn.mythicland.mythiclogin.velocity.service;
 
 import cn.mythicland.framework.component.InjectComponent;
-import cn.mythicland.mythiclogin.common.util.TextUtil;
+import cn.mythicland.framework.text.TextUtil;
 import cn.mythicland.mythiclogin.velocity.config.key.MessageKey;
 import com.velocitypowered.api.proxy.Player;
 import net.kyori.adventure.text.Component;
