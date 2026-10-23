@@ -103,7 +103,7 @@ public final class PremiumProxyService {
         });
     }
 
-    @Subscribe(order = PostOrder.LAST)
+    @Subscribe(order = PostOrder.FIRST)
     public void onProfile(GameProfileRequestEvent event) {
         if (!settings.getPremium().enabled()) return;
         Attempt attempt = attempts.get(normalize(event.getUsername()));

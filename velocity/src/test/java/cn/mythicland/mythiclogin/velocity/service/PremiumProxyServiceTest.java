@@ -11,6 +11,8 @@ import cn.mythicland.mythiclogin.velocity.config.PluginSettings;
 import cn.mythicland.mythiclogin.velocity.util.PluginLogger;
 import com.velocitypowered.api.event.Continuation;
 import com.velocitypowered.api.event.EventTask;
+import com.velocitypowered.api.event.PostOrder;
+import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.command.CommandExecuteEvent;
 import com.velocitypowered.api.event.connection.LoginEvent;
 import com.velocitypowered.api.event.connection.PluginMessageEvent;
@@ -105,6 +107,30 @@ class PremiumProxyServiceTest {
         assertEquals(PremiumMessage.Type.AUTO_LOGIN, first.type());
         assertTrue(first.showTitle());
         assertFalse(query(UUID.randomUUID()).showTitle());
+    }
+
+    @Test
+    void profileIdentityIsNormalizedBeforeSkinListenersAndPreservesTextures() throws Exception {
+        when(repository.findByPlayerNameIgnoreCase(NAME)).thenReturn(Optional.of(account()
+                .withPremiumUuid(officialUuid)));
+        preLogin();
+        var textures = List.of(new GameProfile.Property("textures", "selected-skin", "signature"));
+        var event = new GameProfileRequestEvent(connection, new GameProfile(officialUuid, NAME, textures), true);
+        Subscribe subscription = PremiumProxyService.class.getMethod("onProfile", GameProfileRequestEvent.class)
+                .getAnnotation(Subscribe.class);
+        PostOrder skinListenerOrder = (PostOrder) Subscribe.class.getMethod("order").getDefaultValue();
+
+        assertTrue(subscription.order().ordinal() < skinListenerOrder.ordinal());
+        service.onProfile(event);
+
+        assertEquals(MinecraftProfiles.offlineUuid(NAME), event.getGameProfile().getId());
+        assertEquals(officialUuid, event.getOriginalProfile().getId());
+        assertEquals(textures, event.getGameProfile().getProperties());
+        when(player.isOnlineMode()).thenReturn(true);
+        LoginEvent login = new LoginEvent(player);
+        run(service.onLogin(login));
+        assertTrue(login.getResult().isAllowed());
+        assertTrue(service.isAuthenticated(player));
     }
 
     @Test
