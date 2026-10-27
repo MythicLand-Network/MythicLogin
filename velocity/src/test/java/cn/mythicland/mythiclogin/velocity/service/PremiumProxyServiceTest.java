@@ -70,6 +70,26 @@ class PremiumProxyServiceTest {
     }
 
     @Test
+    void premiumPasswordChecksAreLimitedBeforeScheduling() {
+        when(repository.findByExactPlayerName(NAME)).thenReturn(Optional.of(account()));
+        EventTask pending = service.onPremiumCommand(new CommandExecuteEvent(player, "premium wrong"));
+        assertNotNull(pending);
+        assertNull(service.onPremiumCommand(new CommandExecuteEvent(player, "premium wrong")));
+        verify(repository, never()).findByExactPlayerName(NAME);
+        run(pending);
+        for (int i = 1; i < 5; i++) run(service.onPremiumCommand(new CommandExecuteEvent(player, "premium wrong")));
+        assertNull(service.onPremiumCommand(new CommandExecuteEvent(player, "premium wrong")));
+        verify(repository, times(5)).findByExactPlayerName(NAME);
+    }
+
+    @Test
+    void premiumPasswordCheckReleasesPermitAfterRepositoryFailure() {
+        when(repository.findByExactPlayerName(NAME)).thenThrow(new IllegalStateException("database unavailable"));
+        run(service.onPremiumCommand(new CommandExecuteEvent(player, "premium wrong")));
+        assertNotNull(service.onPremiumCommand(new CommandExecuteEvent(player, "premium wrong")));
+    }
+
+    @Test
     void existingOfflineAccountCannotBeTakenByMatchingPremiumName() {
         Account offline = account();
         when(repository.findByPlayerNameIgnoreCase(NAME)).thenReturn(Optional.of(offline));

@@ -24,6 +24,7 @@ public enum MessageKey {
     AUTH_REGISTER_SUCCESS("&a注册成功, 已为您自动登录。"),
     AUTH_AUTO_LOGIN_MESSAGE("&a欢迎回来, 已为你自动登录。"),
     AUTH_LOGOUT_SUCCESS("&c你已成功登出, 请重新登录。"),
+    AUTH_LOGIN_RATE_LIMITED("&c登录尝试过于频繁, 请稍后再试。"),
     AUTH_LOGIN_FAILED("&c密码不正确, 请检查后重新输入。"),
     AUTH_LOGIN_FAILED_WITH_RECOVERY("&c密码不正确。若忘记密码, 请使用 /fp 通过已绑定邮箱重置密码。"),
     AUTH_EMAIL_BIND_RECOMMENDED("&e你的账号尚未绑定邮箱。推荐使用 /bind email <邮箱> 完成绑定, 以便忘记密码时找回账号。"),

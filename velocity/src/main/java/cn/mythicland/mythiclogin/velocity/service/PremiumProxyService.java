@@ -7,6 +7,7 @@ import cn.mythicland.framework.security.ChallengeRegistry;
 import cn.mythicland.framework.security.PasswordHashes;
 import cn.mythicland.mythiclogin.common.premium.PremiumMessage;
 import cn.mythicland.mythiclogin.common.premium.PremiumProtocol;
+import cn.mythicland.mythiclogin.common.security.PasswordAttemptLimiter;
 import cn.mythicland.mythiclogin.domain.account.Account;
 import cn.mythicland.mythiclogin.domain.account.AccountRepository;
 import cn.mythicland.mythiclogin.velocity.config.PluginSettings;
@@ -48,6 +49,7 @@ public final class PremiumProxyService {
     private final ChallengeRegistry<Player, Account> credentials = new ChallengeRegistry<>();
     private final ChallengeRegistry<Player, Unbinding> unbindings = new ChallengeRegistry<>();
     private final PasswordHashes passwords = new PasswordHashes();
+    private final PasswordAttemptLimiter passwordAttempts = new PasswordAttemptLimiter();
     private final Map<String, Attempt> attempts = new ConcurrentHashMap<>();
     private final Map<String, Binding> bindings = new ConcurrentHashMap<>();
     private final Map<Player, Identity> identities = new ConcurrentHashMap<>();
@@ -293,43 +295,57 @@ public final class PremiumProxyService {
     public EventTask onPremiumCommand(CommandExecuteEvent event) {
         if (!(event.getCommandSource() instanceof Player player) || !CommandLabels.matches(event.getCommand(), "premium")) return null;
         event.setResult(CommandExecuteEvent.CommandResult.denied());
+        String accountName = player.getUsername();
+        String address = player.getRemoteAddress().getAddress().getHostAddress();
+        if (!passwordAttempts.tryAcquire(accountName, address)) {
+            player.sendMessage(MessageService.deserialize("&c登录尝试过于频繁, 请稍后再试。"));
+            return null;
+        }
         return EventTask.async(() -> {
-            ServerConnection server = player.getCurrentServer().orElse(null);
-            if (server == null) return;
-            String[] parts = event.getCommand().trim().split("\\s+");
-            PremiumMessage.Type type = PremiumMessage.Type.COMMAND_FAILED;
-            UUID nonce = UUID.randomUUID();
-            long registerDate = 0;
-            String detail = "用法: /premium <原密码>";
             try {
-                if (!settings.getPremium().enabled()) {
-                    player.sendMessage(MessageService.deserialize("&c服务器未开启正版免登录。"));
-                    return;
-                }
-                if (parts.length == 2) {
-                    Account account = repository.findByExactPlayerName(player.getUsername()).orElseThrow();
-                    if (account.getPremiumUuid() != null) {
-                        detail = "该账号已绑定正版。";
-                    } else if (!passwords.verify(parts[1], account.getPassword())) {
-                        type = PremiumMessage.Type.PASSWORD_FAILED;
-                        detail = "";
-                    } else {
-                        nonce = credentials.issue(player, account, Duration.ofSeconds(60));
-                        type = PremiumMessage.Type.BIND_CHECK;
-                        registerDate = account.getRegisterDate();
-                        detail = account.getPassword();
-                    }
-                }
-            } catch (RuntimeException exception) {
-                logger.severe("Failed to verify premium binding password for " + player.getUsername(), exception);
-                detail = "无法申请正版绑定, 请稍后重试。";
-            }
-            PremiumMessage message = new PremiumMessage(type, nonce, player.getUsername(), player.getUniqueId(),
-                    null, false, registerDate, detail);
-            if (player.isActive() && player.getCurrentServer().orElse(null) == server) {
-                server.sendPluginMessage(CHANNEL, PremiumProtocol.encode(message, settings.getPremium()));
+                handlePremiumCommand(player, event);
+            } finally {
+                passwordAttempts.release(accountName);
             }
         });
+    }
+
+    private void handlePremiumCommand(Player player, CommandExecuteEvent event) {
+        ServerConnection server = player.getCurrentServer().orElse(null);
+        if (server == null) return;
+        String[] parts = event.getCommand().trim().split("\\s+");
+        PremiumMessage.Type type = PremiumMessage.Type.COMMAND_FAILED;
+        UUID nonce = UUID.randomUUID();
+        long registerDate = 0;
+        String detail = "用法: /premium <原密码>";
+        try {
+            if (!settings.getPremium().enabled()) {
+                player.sendMessage(MessageService.deserialize("&c服务器未开启正版免登录。"));
+                return;
+            }
+            if (parts.length == 2) {
+                Account account = repository.findByExactPlayerName(player.getUsername()).orElseThrow();
+                if (account.getPremiumUuid() != null) {
+                    detail = "该账号已绑定正版。";
+                } else if (!passwords.verify(parts[1], account.getPassword())) {
+                    type = PremiumMessage.Type.PASSWORD_FAILED;
+                    detail = "";
+                } else {
+                    nonce = credentials.issue(player, account, Duration.ofSeconds(60));
+                    type = PremiumMessage.Type.BIND_CHECK;
+                    registerDate = account.getRegisterDate();
+                    detail = account.getPassword();
+                }
+            }
+        } catch (RuntimeException exception) {
+            logger.severe("Failed to verify premium binding password for " + player.getUsername(), exception);
+            detail = "无法申请正版绑定, 请稍后重试。";
+        }
+        PremiumMessage message = new PremiumMessage(type, nonce, player.getUsername(), player.getUniqueId(),
+                null, false, registerDate, detail);
+        if (player.isActive() && player.getCurrentServer().orElse(null) == server) {
+            server.sendPluginMessage(CHANNEL, PremiumProtocol.encode(message, settings.getPremium()));
+        }
     }
 
     @Subscribe(order = PostOrder.LAST)

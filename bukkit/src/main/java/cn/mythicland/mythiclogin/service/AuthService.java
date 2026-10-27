@@ -2,6 +2,7 @@ package cn.mythicland.mythiclogin.service;
 
 import cn.mythicland.framework.component.InjectComponent;
 import cn.mythicland.mythiclogin.common.premium.PremiumMessage;
+import cn.mythicland.mythiclogin.common.security.PasswordAttemptLimiter;
 import cn.mythicland.mythiclogin.domain.account.AccountRepository;
 import cn.mythicland.mythiclogin.domain.account.Account;
 import cn.mythicland.mythiclogin.config.key.MessageKey;
@@ -34,6 +35,7 @@ public final class AuthService {
     private final RestrictionService restrictionService;
     private final AccountNotificationService accountNotificationService;
     private final PremiumBridge premiumBridge;
+    private final PasswordAttemptLimiter passwordAttempts = new PasswordAttemptLimiter();
     private BukkitTask displayTask;
 
     public AuthService(
@@ -324,19 +326,35 @@ public final class AuthService {
             return CompletableFuture.completedFuture(messageService.get(MessageKey.AUTH_NOT_REGISTERED));
         }
 
-        return CompletableFuture.supplyAsync(() -> passwordService.verify(password, context.getAccount().getPassword()), dataManager.getExecutorService())
-            .thenApply(valid -> {
-                if (!valid) {
-                    Bukkit.getScheduler().runTask(plugin, () -> displayService.showLoginFailureTitle(player));
-                    MessageKey messageKey = context.getAccount().getEmail() == null
-                            || context.getAccount().getEmail().isBlank()
-                            ? MessageKey.AUTH_LOGIN_FAILED
-                            : MessageKey.AUTH_LOGIN_FAILED_WITH_RECOVERY;
-                    return messageService.get(messageKey);
+        String account = context.getAccount().getUsername();
+        if (!passwordAttempts.tryAcquire(account, address(player))) {
+            return CompletableFuture.completedFuture(messageService.get(MessageKey.AUTH_LOGIN_RATE_LIMITED));
+        }
+        CompletableFuture<Boolean> verification;
+        try {
+            verification = CompletableFuture.supplyAsync(() -> {
+                try {
+                    return passwordService.verify(password, context.getAccount().getPassword());
+                } finally {
+                    passwordAttempts.release(account);
                 }
-                Bukkit.getScheduler().runTask(plugin, () -> completeAuthentication(player, context.getAccount(), AuthState.PENDING_LOGIN));
-                return loginSuccessMessage(context.getAccount());
-            });
+            }, dataManager.getExecutorService());
+        } catch (RuntimeException exception) {
+            passwordAttempts.release(account);
+            throw exception;
+        }
+        return verification.thenApply(valid -> {
+            if (!valid) {
+                Bukkit.getScheduler().runTask(plugin, () -> displayService.showLoginFailureTitle(player));
+                MessageKey messageKey = context.getAccount().getEmail() == null
+                        || context.getAccount().getEmail().isBlank()
+                        ? MessageKey.AUTH_LOGIN_FAILED
+                        : MessageKey.AUTH_LOGIN_FAILED_WITH_RECOVERY;
+                return messageService.get(messageKey);
+            }
+            Bukkit.getScheduler().runTask(plugin, () -> completeAuthentication(player, context.getAccount(), AuthState.PENDING_LOGIN));
+            return loginSuccessMessage(context.getAccount());
+        });
     }
 
     public CompletableFuture<String> changePassword(Player player, String newPassword, String confirmation) {
