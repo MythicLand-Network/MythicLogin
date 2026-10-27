@@ -3,6 +3,7 @@ package cn.mythicland.mythiclogin.velocity.config;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.yaml.snakeyaml.Yaml;
+import cn.mythicland.mythiclogin.infrastructure.database.DatabaseMode;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -15,8 +16,21 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ProxyConfigTest {
     @Test
+    void shouldResolveLocalAndSharedSqlitePaths(@TempDir Path directory) throws Exception {
+        for (Path file : new Path[]{Path.of("data/accounts.db"), directory.resolve("shared/accounts.db")}) {
+            Files.writeString(directory.resolve("config.yml"), "database:\n  mode: sqlite\n  sqlite:\n    file: '"
+                    + file + "'\n");
+            ProxyConfig config = new ProxyConfig(directory, ProxyConfigTest.class.getClassLoader());
+            assertEquals(DatabaseMode.SQLITE, config.getSettings().getDatabase().mode());
+            assertEquals(directory.resolve(file).toAbsolutePath().normalize(),
+                    config.getSettings().getDatabase().sqliteFile());
+        }
+    }
+
+    @Test
     void shouldPersistGeneratedSecretForNewAndExistingConfigurations(@TempDir Path tempDir) throws Exception {
-        String[] configurations = {null, "security:\n  session-timeout-minutes: 12\n", "premium:\n  shared-secret: ''\n"};
+        String[] configurations =
+                {null, "security:\n  session-timeout-minutes: 12\n", "premium:\n  shared-secret: ''\n"};
         for (int index = 0; index < configurations.length; index++) {
             Path directory = Files.createDirectory(tempDir.resolve("config-" + index));
             Path file = directory.resolve("config.yml");
@@ -40,7 +54,8 @@ class ProxyConfigTest {
     @Test
     void shouldPreserveConfiguredSecret(@TempDir Path tempDir) throws Exception {
         String secret = "abcdefghijklmnopqrstuvwxyz0123456789";
-        Files.writeString(tempDir.resolve("config.yml"), "premium:\n  enabled: true\n  shared-secret: " + secret + "\n");
+        Files.writeString(tempDir.resolve("config.yml"),
+                "premium:\n  enabled: true\n  shared-secret: " + secret + "\n");
         ProxyConfig config = new ProxyConfig(tempDir, ProxyConfigTest.class.getClassLoader());
         assertEquals(secret, config.getSettings().getPremium().sharedSecret());
     }

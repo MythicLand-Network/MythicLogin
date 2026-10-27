@@ -10,6 +10,7 @@ configurations {
     bukkitPostgresqlRuntimeLibraries
     bukkitEmailRuntimeLibraries
     velocityRuntimeLibraries
+    velocitySqliteRuntimeLibraries
     velocityPostgresqlRuntimeLibraries
 }
 
@@ -35,6 +36,7 @@ dependencies {
     bukkitPostgresqlRuntimeLibraries 'org.postgresql:postgresql:42.7.4'
     bukkitEmailRuntimeLibraries 'com.resend:resend-java:4.24.0'
     velocityRuntimeLibraries 'org.yaml:snakeyaml:2.2'
+    velocitySqliteRuntimeLibraries 'org.xerial:sqlite-jdbc:3.46.1.3'
     velocityPostgresqlRuntimeLibraries 'org.flywaydb:flyway-database-postgresql:13.4.0'
     velocityPostgresqlRuntimeLibraries 'org.postgresql:postgresql:42.7.4'
 }
@@ -50,6 +52,7 @@ def runtimeDependencyManifest = registerRuntimeLibraryManifest(
                 'bukkit-postgresql': configurations.bukkitPostgresqlRuntimeLibraries,
                 'bukkit-email': configurations.bukkitEmailRuntimeLibraries,
                 velocity: configurations.velocityRuntimeLibraries,
+                'velocity-sqlite': configurations.velocitySqliteRuntimeLibraries,
                 'velocity-postgresql': configurations.velocityPostgresqlRuntimeLibraries
         ]
 )

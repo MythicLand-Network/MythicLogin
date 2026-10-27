@@ -176,6 +176,7 @@ public final class AuthService {
         Account logged = account.withLoginMeta(address(player), System.currentTimeMillis(), false)
                 .withLoggedState(true);
         authSessionManager.authenticate(player, logged);
+        premiumBridge.sendAuthState(player, true);
         restrictionService.clearRestrictedState(player);
         displayService.clear(player);
         if (result.response.showTitle()) {
@@ -211,6 +212,7 @@ public final class AuthService {
         Account account = accountOptional.get();
         if (shouldAutoLogin(account, player)) {
             authSessionManager.authenticate(player, account);
+            premiumBridge.sendAuthState(player, true);
             restrictionService.clearRestrictedState(player);
             displayService.clear(player);
             displayService.showAutoLoginTitle(player);
@@ -227,6 +229,7 @@ public final class AuthService {
 
     private void setPending(Player player, AuthState state, Account account) {
         authSessionManager.setPending(player, state, account, configManager.getSettings().restrictions().getAuthTimeoutSeconds());
+        premiumBridge.sendAuthState(player, false);
         restrictionService.applyRestrictedState(player);
     }
 
@@ -488,6 +491,7 @@ public final class AuthService {
         long now = System.currentTimeMillis();
         Account updated = account.withLoginMeta(address(player), now, configManager.getSettings().session().isEnabled()).withLoggedState(true);
         authSessionManager.authenticate(player, updated);
+        premiumBridge.sendAuthState(player, true);
         restrictionService.clearRestrictedState(player);
         displayService.clear(player);
         displayService.showSuccessTitle(player, previousState);
@@ -541,6 +545,7 @@ public final class AuthService {
             return;
         }
         authSessionManager.remove(player);
+        premiumBridge.sendAuthState(player, false);
         displayService.clear(player);
         restrictionService.clearRestrictedState(player);
         authSessionManager.prepareJoin(player);
@@ -550,6 +555,7 @@ public final class AuthService {
     private void timeout(Player player) {
         displayService.clear(player);
         AuthSessionManager.SessionContext context = authSessionManager.remove(player);
+        premiumBridge.sendAuthState(player, false);
         restrictionService.clearRestrictedState(player);
         if (context != null && context.getAccount() != null) {
             updateLoggedStateAsync(context.getAccount().getUsername(), false);

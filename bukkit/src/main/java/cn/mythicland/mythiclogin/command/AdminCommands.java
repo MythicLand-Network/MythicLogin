@@ -39,7 +39,10 @@ public final class AdminCommands extends AbstractCommand {
             usages = "/mythiclogin password <玩家名> <新密码>",
             minArguments = 2,
             maxArguments = 2,
-            arguments = @CommandArgument(index = 0, source = SuggestionSource.ONLINE_PLAYERS)
+            arguments = @CommandArgument(
+                    index = 0,
+                    source = SuggestionSource.ONLINE_PLAYERS
+            )
     )
     private void password(CommandContext context) {
         this.commandService.updatePassword(context.sender(), context.argument(0), context.argument(1));
@@ -51,7 +54,10 @@ public final class AdminCommands extends AbstractCommand {
             usages = "/mythiclogin unregister <玩家名>",
             minArguments = 1,
             maxArguments = 1,
-            arguments = @CommandArgument(index = 0, source = SuggestionSource.ONLINE_PLAYERS)
+            arguments = @CommandArgument(
+                    index = 0,
+                    source = SuggestionSource.ONLINE_PLAYERS
+            )
     )
     private void unregister(CommandContext context) {
         this.commandService.unregister(context.sender(), context.argument(0));

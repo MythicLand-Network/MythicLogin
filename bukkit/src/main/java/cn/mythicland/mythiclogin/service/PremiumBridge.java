@@ -4,6 +4,7 @@ import cn.mythicland.framework.component.InjectComponent;
 import cn.mythicland.framework.security.ChallengeRegistry;
 import cn.mythicland.mythiclogin.common.premium.PremiumMessage;
 import cn.mythicland.mythiclogin.common.premium.PremiumProtocol;
+import cn.mythicland.mythiclogin.common.restriction.AuthStateChannel;
 import cn.mythicland.mythiclogin.manager.ConfigManager;
 import cn.mythicland.mythiclogin.domain.account.Account;
 import org.bukkit.Bukkit;
@@ -38,6 +39,8 @@ public final class PremiumBridge implements PluginMessageListener {
 
     public void register() {
         Bukkit.getMessenger().registerOutgoingPluginChannel(plugin, PremiumProtocol.CHANNEL);
+        Bukkit.getMessenger().registerOutgoingPluginChannel(plugin, AuthStateChannel.CHANNEL);
+        Bukkit.getMessenger().registerIncomingPluginChannel(plugin, AuthStateChannel.CHANNEL, this);
         Bukkit.getMessenger().registerIncomingPluginChannel(plugin, PremiumProtocol.CHANNEL, this);
     }
 
@@ -45,10 +48,17 @@ public final class PremiumBridge implements PluginMessageListener {
         Bukkit.getOnlinePlayers().forEach(this::clear);
         Bukkit.getMessenger().unregisterIncomingPluginChannel(plugin, PremiumProtocol.CHANNEL, this);
         Bukkit.getMessenger().unregisterOutgoingPluginChannel(plugin, PremiumProtocol.CHANNEL);
+        Bukkit.getMessenger().unregisterOutgoingPluginChannel(plugin, AuthStateChannel.CHANNEL);
+        Bukkit.getMessenger().unregisterIncomingPluginChannel(plugin, AuthStateChannel.CHANNEL, this);
     }
 
     public CompletableFuture<PremiumMessage> query(Player player) {
         return request(player, PremiumMessage.Type.QUERY, null);
+    }
+
+    public void sendAuthState(Player player, boolean authenticated) {
+        player.sendPluginMessage(plugin, AuthStateChannel.CHANNEL,
+                new byte[]{authenticated ? AuthStateChannel.AUTHENTICATED : AuthStateChannel.UNAUTHENTICATED});
     }
 
     public void bind(Player player) {
@@ -137,6 +147,10 @@ public final class PremiumBridge implements PluginMessageListener {
 
     @Override
     public void onPluginMessageReceived(String channel, Player player, byte[] bytes) {
+        if (AuthStateChannel.CHANNEL.equals(channel)) {
+            if (bytes.length == 1 && bytes[0] == AuthStateChannel.QUERY) sendAuthState(player, sessions.isAuthenticated(player));
+            return;
+        }
         if (!PremiumProtocol.CHANNEL.equals(channel) || !configManager.getSettings().premium().enabled()) return;
         try {
             PremiumMessage response = PremiumProtocol.decode(bytes, configManager.getSettings().premium());

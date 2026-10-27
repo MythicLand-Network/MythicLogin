@@ -80,6 +80,7 @@ final class LoaderBootstrap {
                 Set.of("premium", "unpremium")
         );
         plugin.getProxyServer().getChannelRegistrar().register(PremiumProxyService.CHANNEL);
+        plugin.getProxyServer().getChannelRegistrar().register(ProxySessionListener.AUTH_STATE_CHANNEL);
         plugin.getProxyServer().getEventManager().register(plugin, components.resolve(PremiumProxyService.class));
         plugin.getProxyServer().getEventManager().register(plugin, components.resolve(ProxyPreLoginListener.class));
         plugin.getProxyServer().getEventManager().register(plugin, components.resolve(ProxyCommandListener.class));
@@ -89,6 +90,7 @@ final class LoaderBootstrap {
     void shutdown(MythicLoginVelocity plugin) {
         if (commandLogFilter != null) commandLogFilter.close();
         plugin.getProxyServer().getChannelRegistrar().unregister(PremiumProxyService.CHANNEL);
+        plugin.getProxyServer().getChannelRegistrar().unregister(ProxySessionListener.AUTH_STATE_CHANNEL);
         plugin.getProxyServer().getEventManager().unregisterListeners(plugin);
     }
 

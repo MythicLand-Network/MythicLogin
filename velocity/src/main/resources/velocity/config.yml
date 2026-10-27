@@ -1,6 +1,8 @@
 database:
   mode: postgresql
   table: mythiclogin
+  sqlite:
+    file: data/mythiclogin.db
   postgresql:
     host: 127.0.0.1
     port: 5432

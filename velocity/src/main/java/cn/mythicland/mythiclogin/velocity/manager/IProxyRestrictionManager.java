@@ -19,5 +19,9 @@ public interface IProxyRestrictionManager {
 
     void clearAuthentication(Player player);
 
+    boolean isTransferAuthenticated(Player player);
+
+    void setTransferAuthenticated(Player player, boolean authenticated);
+
     void runStartupSanityCheck();
 }

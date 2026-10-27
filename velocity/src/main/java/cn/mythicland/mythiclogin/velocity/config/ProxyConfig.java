@@ -12,10 +12,12 @@ import java.nio.file.Path;
 
 public final class ProxyConfig extends AbstractYamlConfiguration {
 
+    private final Path dataDirectory;
     private PluginSettings settings;
 
     public ProxyConfig(Path dataDirectory, ClassLoader classLoader) {
         super(dataDirectory, classLoader, "config.yml");
+        this.dataDirectory = dataDirectory;
         reload();
     }
 
@@ -33,15 +35,7 @@ public final class ProxyConfig extends AbstractYamlConfiguration {
 
     private PluginSettings parse() {
         return new PluginSettings(
-                proxyDatabaseSettings(
-                        DatabaseMode.parse(getString("database.mode", "postgresql")),
-                        getString("database.postgresql.host", "127.0.0.1"),
-                        getInt("database.postgresql.port", 5432),
-                        getString("database.postgresql.name", "mythiclogin"),
-                        getString("database.postgresql.username", "root"),
-                        getString("database.postgresql.password", ""),
-                        getString("database.table", DatabaseSettings.TABLE_NAME)
-                ),
+                proxyDatabaseSettings(),
                 new SessionSettings(
                         getBoolean("security.session-enabled", true),
                         getInt("security.session-timeout-minutes", 5)
@@ -66,18 +60,20 @@ public final class ProxyConfig extends AbstractYamlConfiguration {
         );
     }
 
-    private DatabaseSettings proxyDatabaseSettings(
-            DatabaseMode mode,
-            String host,
-            int port,
-            String name,
-            String username,
-            String password,
-            String table
-    ) {
-        if (mode != DatabaseMode.POSTGRESQL) {
-            throw new IllegalArgumentException("Velocity deployments require database.mode=postgresql");
+    private DatabaseSettings proxyDatabaseSettings() {
+        DatabaseMode mode = DatabaseMode.parse(getString("database.mode", "postgresql"));
+        String table = getString("database.table", DatabaseSettings.TABLE_NAME);
+        if (mode == DatabaseMode.SQLITE) {
+            Path file = Path.of(getString("database.sqlite.file", "data/mythiclogin.db"));
+            return DatabaseSettings.sqlite(file.isAbsolute() ? file : this.dataDirectory.resolve(file), table);
         }
-        return DatabaseSettings.postgresql(host, port, name, username, password, table);
+        return DatabaseSettings.postgresql(
+                getString("database.postgresql.host", "127.0.0.1"),
+                getInt("database.postgresql.port", 5432),
+                getString("database.postgresql.name", "mythiclogin"),
+                getString("database.postgresql.username", "root"),
+                getString("database.postgresql.password", ""),
+                table
+        );
     }
 }

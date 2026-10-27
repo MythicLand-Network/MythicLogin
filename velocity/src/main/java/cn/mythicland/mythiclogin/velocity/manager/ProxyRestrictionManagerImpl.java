@@ -27,6 +27,7 @@ public final class ProxyRestrictionManagerImpl implements IProxyRestrictionManag
     private final PluginLogger pluginLogger;
     private final PremiumProxyService premium;
     private final Set<UUID> authenticatedPlayers = ConcurrentHashMap.newKeySet();
+    private final Set<Player> transferAuthenticated = ConcurrentHashMap.newKeySet();
     private final Set<UUID> missingAccountWarnedPlayers = ConcurrentHashMap.newKeySet();
 
     public ProxyRestrictionManagerImpl(
@@ -114,8 +115,20 @@ public final class ProxyRestrictionManagerImpl implements IProxyRestrictionManag
 
     @Override
     public void clearAuthentication(Player player) {
+        transferAuthenticated.remove(player);
         authenticatedPlayers.remove(player.getUniqueId());
         missingAccountWarnedPlayers.remove(player.getUniqueId());
+    }
+
+    @Override
+    public boolean isTransferAuthenticated(Player player) {
+        return transferAuthenticated.contains(player);
+    }
+
+    @Override
+    public void setTransferAuthenticated(Player player, boolean authenticated) {
+        if (authenticated) transferAuthenticated.add(player);
+        else transferAuthenticated.remove(player);
     }
 
     @Override

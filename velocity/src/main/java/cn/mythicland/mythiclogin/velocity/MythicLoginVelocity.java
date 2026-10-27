@@ -17,10 +17,10 @@ import java.util.List;
 import java.util.Set;
 
 @Plugin(
-    id = "mythiclogin",
-    name = "MythicLoginVelocity",
-    version = "1.0.0",
-    authors = {"bilib"}
+        id = "mythiclogin",
+        name = "MythicLoginVelocity",
+        version = "1.0.0",
+        authors = {"bilib"}
 )
 public final class MythicLoginVelocity {
 
@@ -31,9 +31,9 @@ public final class MythicLoginVelocity {
 
     @Inject
     public MythicLoginVelocity(
-        ProxyServer proxyServer,
-        Logger logger,
-        @DataDirectory Path dataDirectory
+            ProxyServer proxyServer,
+            Logger logger,
+            @DataDirectory Path dataDirectory
     ) {
         this.proxyServer = proxyServer;
         this.logger = logger;
@@ -46,7 +46,7 @@ public final class MythicLoginVelocity {
                 this,
                 "cn.mythicland.mythiclogin.velocity.runtime.VelocityMainLoader",
                 this.dataDirectory,
-                Set.of("common", "velocity", "velocity-postgresql"),
+                Set.of("common", "velocity", "velocity-postgresql", "velocity-sqlite"),
                 this.logger::info,
                 this.logger::warn,
                 FrameworkRuntimeClassLoading.velocity(

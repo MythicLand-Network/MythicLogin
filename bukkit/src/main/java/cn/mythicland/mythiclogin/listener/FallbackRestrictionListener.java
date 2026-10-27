@@ -31,6 +31,7 @@ public final class FallbackRestrictionListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = false)
     public void onMove(PlayerMoveEvent event) {
+        if (event instanceof PlayerTeleportEvent) return;
         if (!shouldBlock(event.getPlayer())) return;
         if (event.getTo() == null || event.getFrom().distanceSquared(event.getTo()) <= 0) return;
         Location locked = event.getFrom().clone();

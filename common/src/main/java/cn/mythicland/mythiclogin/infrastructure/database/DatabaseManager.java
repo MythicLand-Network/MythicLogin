@@ -48,17 +48,20 @@ public final class DatabaseManager {
                 == cn.mythicland.mythiclogin.infrastructure.database.DatabaseMode.SQLITE
                 ? cn.mythicland.framework.database.DatabaseMode.SQLITE
                 : cn.mythicland.framework.database.DatabaseMode.POSTGRESQL;
-        DatabaseConfiguration configuration = DatabaseConfiguration.builder(mode, settings.jdbcUrl())
+        DatabaseConfiguration.Builder configuration = DatabaseConfiguration.builder(mode, settings.jdbcUrl())
                 .sqliteFile(settings.sqliteFile())
                 .credentials(settings.username(), settings.password())
                 .maximumPoolSize(settings.maximumPoolSize())
                 .minimumIdle(1)
                 .poolName(this.poolName)
                 .migrationLocations(List.of("classpath:db/" + settings.mode().name().toLowerCase()))
-                .placeholders(Map.of("table", settings.table()))
-                .build();
+                .placeholders(Map.of("table", settings.table()));
+        if (settings.mode() == DatabaseMode.SQLITE) {
+            configuration.dataSourceProperty("journal_mode", "WAL")
+                    .dataSourceProperty("busy_timeout", "30000");
+        }
         cn.mythicland.framework.database.DatabaseManager manager = new cn.mythicland.framework.database.DatabaseManager(
-                configuration,
+                configuration.build(),
                 this.logger
         );
         manager.start();

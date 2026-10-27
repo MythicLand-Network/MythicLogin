@@ -72,6 +72,26 @@ class JdbcAccountRepositoryTest {
     }
 
     @Test
+    void shouldShareAccountsBetweenIndependentSqlitePools() {
+        DatabaseSettings settings = DatabaseSettings.sqlite(this.temporaryDirectory.resolve("shared.db"), "accounts");
+        this.databaseManager = new DatabaseManager(Logger.getLogger("test"), settings, "LoginBackend");
+        DatabaseManager proxyDatabase = new DatabaseManager(Logger.getLogger("test"), settings, "LoginProxy");
+        try {
+            JdbcAccountRepository backend = new JdbcAccountRepository(this.databaseManager, () -> settings);
+            JdbcAccountRepository proxy = new JdbcAccountRepository(proxyDatabase, () -> settings);
+            assertTrue(backend.create(new Account("tester", "Tester", "hash", "127.0.0.1", 1L, 1L,
+                    "127.0.0.1", false, false)));
+            assertFalse(proxy.isLogged("tester"));
+            assertTrue(backend.updateLoggedState("tester", true));
+            assertTrue(proxy.isLogged("tester"));
+            assertTrue(proxy.updateLoggedState("tester", false));
+            assertFalse(backend.isLogged("tester"));
+        } finally {
+            proxyDatabase.shutdown();
+        }
+    }
+
+    @Test
     void shouldRejectEmailAlreadyBoundToAnotherAccount() {
         DatabaseSettings settings = DatabaseSettings.sqlite(
                 this.temporaryDirectory.resolve("accounts.db"),
