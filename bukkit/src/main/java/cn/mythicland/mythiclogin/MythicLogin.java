@@ -1,31 +1,28 @@
 package cn.mythicland.mythiclogin;
 
+import cn.mythicland.framework.bukkit.bootstrap.ManagedRuntimePlugin;
 import cn.mythicland.framework.runtime.FrameworkRuntimeClassLoading;
 import cn.mythicland.framework.runtime.RuntimeBootstrap;
 import cn.mythicland.mythiclogin.bootstrap.RuntimeBootstrapFactory;
 import com.comphenix.protocol.ProtocolLibrary;
-import org.bukkit.plugin.java.JavaPlugin;
-
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.logging.Level;
 
-public final class MythicLogin extends JavaPlugin {
-    private RuntimeBootstrap runtimeBootstrap;
-
+public final class MythicLogin extends ManagedRuntimePlugin {
     @Override
-    public void onLoad() {
-        initializeRuntime();
+    protected boolean prepareRuntimeOnLoad() {
+        return true;
     }
 
-    private void initializeRuntime() {
-        if (this.runtimeBootstrap != null) return;
+    @Override
+    protected RuntimeBootstrap createRuntime() {
         saveDefaultConfig();
         String databaseMode = getConfig().getString("database.mode", "sqlite")
                 .trim()
                 .toLowerCase(Locale.ROOT);
-        this.runtimeBootstrap = RuntimeBootstrapFactory.create(
+        return RuntimeBootstrapFactory.create(
                 this,
                 "cn.mythicland.mythiclogin.runtime.BukkitMainLoader",
                 getDataFolder().toPath(),
@@ -35,8 +32,6 @@ public final class MythicLogin extends JavaPlugin {
                 FrameworkRuntimeClassLoading.bukkit(
                         List.of(
                                 "cn.mythicland.mythiclogin.",
-                                "org.reflections.",
-                                "javassist.",
                                 "com.zaxxer.hikari.",
                                 "org.flywaydb.",
                                 "org.postgresql.",
@@ -58,31 +53,19 @@ public final class MythicLogin extends JavaPlugin {
     }
 
     @Override
-    public void onEnable() {
-        if (ProtocolLibrary.getProtocolManager() == null) {
-            getLogger().severe("ProtocolLib is required for MythicLogin.");
-            getServer().getPluginManager().disablePlugin(this);
-            return;
-        }
-        try {
-            initializeRuntime();
-            this.runtimeBootstrap.load();
-            this.runtimeBootstrap.enable();
-        } catch (RuntimeException exception) {
-            getLogger().log(Level.SEVERE, "Failed to initialize MythicLogin runtime.", exception);
-            getServer().getPluginManager().disablePlugin(this);
-        }
+    protected boolean canEnableRuntime() {
+        if (ProtocolLibrary.getProtocolManager() != null) return true;
+        getLogger().severe("ProtocolLib is required for MythicLogin.");
+        getServer().getPluginManager().disablePlugin(this);
+        return false;
     }
 
     @Override
-    public void onDisable() {
-        if (this.runtimeBootstrap == null) return;
-        this.runtimeBootstrap.disable();
-        this.runtimeBootstrap = null;
+    protected void onEnableFailure(RuntimeException exception) {
+        getLogger().log(Level.SEVERE, "Failed to initialize MythicLogin runtime.", exception);
     }
 
     public void reloadPlugin() {
-        if (this.runtimeBootstrap == null) return;
-        this.runtimeBootstrap.reload();
+        this.reloadRuntime();
     }
 }

@@ -52,8 +52,6 @@ public final class MythicLoginVelocity {
                 FrameworkRuntimeClassLoading.velocity(
                         List.of(
                                 "cn.mythicland.mythiclogin.",
-                                "org.reflections.",
-                                "javassist.",
                                 "com.zaxxer.hikari.",
                                 "org.flywaydb.",
                                 "org.postgresql.",

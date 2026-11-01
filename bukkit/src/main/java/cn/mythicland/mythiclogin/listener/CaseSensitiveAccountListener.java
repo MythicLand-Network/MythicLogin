@@ -1,14 +1,13 @@
 package cn.mythicland.mythiclogin.listener;
 
-import cn.mythicland.framework.bukkit.ListenerComponent;
+import cn.mythicland.framework.bukkit.component.ListenerComponent;
 import cn.mythicland.framework.component.InjectComponent;
 import cn.mythicland.mythiclogin.service.AuthService;
+import java.util.Optional;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
-
-import java.util.Optional;
 
 @InjectComponent
 @ListenerComponent

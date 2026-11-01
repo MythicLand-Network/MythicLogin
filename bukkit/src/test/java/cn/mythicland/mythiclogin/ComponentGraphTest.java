@@ -1,6 +1,6 @@
 package cn.mythicland.mythiclogin;
 
-import cn.mythicland.framework.command.CommandRouteCompiler;
+import cn.mythicland.framework.bukkit.command.CommandRouteCompiler;
 import cn.mythicland.framework.component.ComponentContainer;
 import cn.mythicland.framework.component.ComponentResolver;
 import cn.mythicland.mythiclogin.email.EmailGateway;
@@ -12,10 +12,9 @@ import cn.mythicland.mythiclogin.service.PlayerCommandService;
 import cn.mythicland.mythiclogin.service.VerificationCodeService;
 import cn.mythicland.mythiclogin.util.PluginLogger;
 import com.comphenix.protocol.ProtocolManager;
-import org.junit.jupiter.api.Test;
-
 import java.util.function.Consumer;
 import java.util.logging.Logger;
+import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;

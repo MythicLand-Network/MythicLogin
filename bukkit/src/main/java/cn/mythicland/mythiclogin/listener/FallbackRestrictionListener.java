@@ -1,6 +1,6 @@
 package cn.mythicland.mythiclogin.listener;
 
-import cn.mythicland.framework.bukkit.ListenerComponent;
+import cn.mythicland.framework.bukkit.component.ListenerComponent;
 import cn.mythicland.framework.component.InjectComponent;
 import cn.mythicland.mythiclogin.config.key.MessageKey;
 import cn.mythicland.mythiclogin.service.AuthService;

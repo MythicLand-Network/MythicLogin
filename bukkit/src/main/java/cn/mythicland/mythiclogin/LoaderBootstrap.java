@@ -1,26 +1,25 @@
 package cn.mythicland.mythiclogin;
 
-import cn.mythicland.framework.bukkit.BukkitComponentRegistrar;
-import cn.mythicland.framework.command.CommandRouteCompiler;
+import cn.mythicland.framework.bukkit.bootstrap.BukkitComponents;
+import cn.mythicland.framework.bukkit.bootstrap.BukkitComponents.Capability;
+import cn.mythicland.framework.bukkit.component.BukkitComponentRegistrar;
 import cn.mythicland.framework.component.ComponentContainer;
-import cn.mythicland.framework.component.ComponentResolver;
 import cn.mythicland.mythiclogin.email.EmailGateway;
 import cn.mythicland.mythiclogin.email.ResendEmailGateway;
 import cn.mythicland.mythiclogin.listener.StartupGateListener;
 import cn.mythicland.mythiclogin.manager.ConfigManager;
 import cn.mythicland.mythiclogin.manager.DataManager;
+import cn.mythicland.mythiclogin.protocol.ProtocolGatekeeper;
 import cn.mythicland.mythiclogin.service.AuthService;
-import cn.mythicland.mythiclogin.service.PremiumBridge;
 import cn.mythicland.mythiclogin.service.EmailAuthService;
 import cn.mythicland.mythiclogin.service.MessageService;
+import cn.mythicland.mythiclogin.service.PremiumBridge;
 import cn.mythicland.mythiclogin.service.StartupGateService;
-import cn.mythicland.mythiclogin.protocol.ProtocolGatekeeper;
 import cn.mythicland.mythiclogin.service.VerificationCodeService;
 import cn.mythicland.mythiclogin.util.PluginLogger;
 import com.comphenix.protocol.ProtocolLibrary;
-import org.bukkit.Bukkit;
-
 import java.util.function.Consumer;
+import org.bukkit.Bukkit;
 
 final class LoaderBootstrap {
 
@@ -71,8 +70,7 @@ final class LoaderBootstrap {
             throw exception;
         }
 
-        ComponentContainer components = new ComponentContainer();
-        components.bind(plugin);
+        ComponentContainer components = BukkitComponents.create(plugin, Capability.COMMANDS);
         components.bind(logger);
         components.bind(configManager);
         components.bind(dataManager);
@@ -81,8 +79,6 @@ final class LoaderBootstrap {
         components.bind(EmailGateway.class, new ResendEmailGateway(configManager));
         components.bind(Runnable.class, (Runnable) PluginLoader::reload);
         components.bind(Consumer.class, (Consumer<Runnable>) action -> runMainThread(plugin, action));
-        components.bind(ComponentResolver.class, components);
-        components.bind(new CommandRouteCompiler(components));
         components.scan(
                 "cn.mythicland.mythiclogin",
                 type -> !type.getName().startsWith("cn.mythicland.mythiclogin.velocity.")
